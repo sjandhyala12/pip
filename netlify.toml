@@ -1,0 +1,9 @@
+# Netlify configuration for The Reading Patch (static site, no build step)
+[build]
+  publish = "."
+
+# Single-page app: all navigation is client-side, so serve index.html for any path.
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200

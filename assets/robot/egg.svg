@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 170" width="200" height="170">
+  <ellipse cx="100" cy="145" rx="62" ry="12" fill="#35315F" opacity="0.08"></ellipse>
+  <ellipse cx="100" cy="88" rx="52" ry="64" fill="#F6E9D4" stroke="#35315F" stroke-width="5"></ellipse>
+  <circle cx="82" cy="70" r="6" fill="#9FB4C7" opacity="0.45"></circle>
+  <circle cx="116" cy="95" r="8" fill="#9FB4C7" opacity="0.45"></circle>
+  <circle cx="94" cy="118" r="5" fill="#9FB4C7" opacity="0.45"></circle>
+  <polyline points="70,52 80,44 88,54 98,42 106,52" fill="none" stroke="#35315F" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"></polyline>
+</svg>
