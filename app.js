@@ -596,6 +596,14 @@ function viewDashboard() {
         </button>
       </div>
 
+      <div class="panel setting-panel">
+        <div>
+          <div class="panel-title" style="margin-bottom:2px">About this app</div>
+          <div class="panel-sub" style="margin-bottom:0">How it works, and what happens to your child's data.</div>
+        </div>
+        <button class="back-btn" data-action="about">Learn more &rarr;</button>
+      </div>
+
       <div class="panel danger">
         <div>
           <div class="panel-title" style="margin-bottom:2px">Reset progress</div>
@@ -608,11 +616,37 @@ function viewDashboard() {
     </div></div>`;
 }
 
+function viewAbout() {
+  const worldNames = CATEGORIES.map(c => c.name).join(', ');
+  return `
+    <div class="screen"><div class="dash-wrap">
+      <div class="dash-topbar">
+        <button class="back-btn" data-action="aboutBack">&larr; Dashboard</button>
+        <div class="dash-title">About this app</div>
+        <span style="width:96px"></span>
+      </div>
+
+      <div class="panel">
+        <div class="panel-title">How it works</div>
+        <div class="panel-sub" style="margin-bottom:0">Kids pick one of six story worlds &mdash; ${esc(worldNames)} &mdash; read a short passage, and answer 5 questions about it. Correct answers earn berries, which grow a pet unique to that world. There's no login or setup required.</div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-title">Privacy</div>
+        <div class="panel-sub">&bull;&nbsp; No accounts, sign-ups, or personal information are ever collected.</div>
+        <div class="panel-sub">&bull;&nbsp; All progress (stars, berries, timing stats) is saved using this browser's storage, on this device only.</div>
+        <div class="panel-sub">&bull;&nbsp; Nothing is sent to a server &mdash; no analytics, no trackers, no ads.</div>
+        <div class="panel-sub">&bull;&nbsp; A different device or browser starts fresh. There's no account to sync, and nothing to delete on our end because nothing ever left this device.</div>
+        <div class="panel-sub" style="margin-bottom:0">&bull;&nbsp; The &ldquo;Reset progress&rdquo; option on the dashboard clears this local data at any time.</div>
+      </div>
+    </div></div>`;
+}
+
 /* ---------- render ---------- */
 const root = document.getElementById('app');
 function render() {
   stopSpeech();   // never let read-aloud bleed across screens
-  const view = { home: viewHome, cat: viewCat, read: viewRead, quiz: viewQuiz, done: viewDone, dashboard: viewDashboard, shop: viewShop }[state.screen];
+  const view = { home: viewHome, cat: viewCat, read: viewRead, quiz: viewQuiz, done: viewDone, dashboard: viewDashboard, shop: viewShop, about: viewAbout }[state.screen];
   root.innerHTML = view();
   window.scrollTo(0, 0);
 }
@@ -763,6 +797,8 @@ root.addEventListener('click', e => {
     case 'next': next(); break;
     case 'reset': reset(); break;
     case 'dashboard': if (!state.gateOpen) state.gate = makeGate(); state.screen = 'dashboard'; render(); break;
+    case 'about': state.screen = 'about'; render(); break;
+    case 'aboutBack': state.screen = 'dashboard'; render(); break;
     case 'gateSubmit': handleGate(); break;
     case 'shop': if (shopUnlocked(state.catId)) { state.screen = 'shop'; render(); } break;
     case 'shopLocked': { const c = cat(); alert('The Berry Shop opens once ' + c.petName + ' grows to the Big stage. Keep reading to earn berries!'); break; }
