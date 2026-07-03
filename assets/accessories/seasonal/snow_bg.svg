@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 170" width="200" height="170">
+  <title>Snow Day</title>
+  <desc>Reading Patch background &#34;snow_bg&#34;. Approximate swatch. Live CSS background: radial-gradient(circle at 20% 30%, #FFFFFF 2px, transparent 2.4px), radial-gradient(circle at 68% 22%, #FFFFFF 1.6px, transparent 2px), radial-gradient(circle at 84% 64%, #FFFFFF 2px, transparent 2.4px), radial-gradient(circle at 36% 72%, #FFFFFF 1.6px, transparent 2px), radial-gradient(circle at 54% 46%, #FFFFFF 1.6px, transparent 2px), linear-gradient(#D6ECFB, #B9DCF3)</desc>
+  <defs>
+    <linearGradient id="g" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#FFFFFF"></stop>
+      <stop offset="17%" stop-color="#FFFFFF"></stop>
+      <stop offset="33%" stop-color="#FFFFFF"></stop>
+      <stop offset="50%" stop-color="#FFFFFF"></stop>
+      <stop offset="67%" stop-color="#FFFFFF"></stop>
+      <stop offset="83%" stop-color="#D6ECFB"></stop>
+      <stop offset="100%" stop-color="#B9DCF3"></stop>
+    </linearGradient>
+  </defs>
+  <rect x="0" y="0" width="200" height="170" rx="18" fill="url(#g)"></rect>
+  <g fill="#FFFFFF"><circle cx="44" cy="46" r="3"></circle><circle cx="150" cy="34" r="2.4"></circle><circle cx="168" cy="104" r="3"></circle><circle cx="70" cy="120" r="2.4"></circle></g>
+</svg>

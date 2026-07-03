@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 170" width="200" height="170">
+  <title>Sunny Meadow</title>
+  <desc>Reading Patch background &#34;meadow&#34;. Approximate swatch. Live CSS background: linear-gradient(#DCF3E1, #A6DCB3)</desc>
+  <defs>
+    <linearGradient id="g" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#DCF3E1"></stop>
+      <stop offset="100%" stop-color="#A6DCB3"></stop>
+    </linearGradient>
+  </defs>
+  <rect x="0" y="0" width="200" height="170" rx="18" fill="url(#g)"></rect>
+</svg>

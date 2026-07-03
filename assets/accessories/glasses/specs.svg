@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 170" width="200" height="170">
+  <title>Reading Glasses</title>
+  <desc>Reading Patch accessory &#34;specs&#34; (Glasses, slot: face). Drawn in the pet&#39;s 0 0 200 170 frame so its position matches the live app.</desc>
+  <g fill="#FFFFFF" fill-opacity="0.35" stroke="#35315F" stroke-width="3">
+  <circle cx="80" cy="88" r="13">
+  </circle>
+  <circle cx="120" cy="88" r="13">
+  </circle>
+  </g>
+  <line x1="93" y1="88" x2="107" y2="88" stroke="#35315F" stroke-width="3">
+  </line>
+</svg>

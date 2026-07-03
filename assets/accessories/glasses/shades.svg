@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 170" width="200" height="170">
+  <title>Cool Shades</title>
+  <desc>Reading Patch accessory &#34;shades&#34; (Glasses, slot: face). Drawn in the pet&#39;s 0 0 200 170 frame so its position matches the live app.</desc>
+  <rect x="64" y="80" width="28" height="18" rx="7" fill="#2A2740" stroke="#35315F" stroke-width="3">
+  </rect>
+  <rect x="108" y="80" width="28" height="18" rx="7" fill="#2A2740" stroke="#35315F" stroke-width="3">
+  </rect>
+  <line x1="92" y1="85" x2="108" y2="85" stroke="#35315F" stroke-width="3">
+  </line>
+</svg>

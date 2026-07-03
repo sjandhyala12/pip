@@ -151,5 +151,95 @@ export const PASSAGES = [
       { q: 'When it is summer where you live, what is it on the other side of the world?', choices: ['Also summer', 'Winter', 'Spring', 'No season at all'], answer: 1, skill: 'Detail', hint: 'Kids there are building snowmen in July!', explain: 'The two halves of Earth lean opposite ways, so when one half has summer, the other has winter.' },
       { q: 'Why are winter days shorter and colder?', choices: ['The sun is tired', 'Your part of Earth is tilted away, so light comes in at a slant', 'Clouds block all light', 'Earth spins slower'], answer: 1, skill: 'Inference', hint: 'Which way is your part of Earth leaning in winter?', explain: 'Tilted away from the sun, your part of Earth gets slanted, weaker light and fewer daylight hours — short, cold winter days.' }
     ]
+  },
+  {
+    id: 'sp-daynight', level: 1,
+    title: 'Day and Night',
+    paras: [
+      'Why is it light in the day and dark at night? It is because the Earth spins. Our planet turns around and around, like a slow, giant top. It takes one whole day to spin all the way around one time.',
+      'When your side of the Earth faces the Sun, it is daytime and the sky is bright. When your side turns away from the Sun, it is nighttime and the sky goes dark. The Sun does not really rise and set \u2014 we are the ones who are moving!'
+    ],
+    questions: [
+      { q: 'What is this story mostly about?', choices: ['Why the Sun is hot', 'Why we have day and night', 'How tops are made', 'Where stars go'], answer: 1, skill: 'Main idea', hint: 'The first sentence asks the big question.', explain: 'The story explains why it is light in the day and dark at night.' },
+      { q: 'What does the Earth do to make day and night?', choices: ['It spins around', 'It stands still', 'It grows bigger', 'It moves to the Sun'], answer: 0, skill: 'Detail', hint: 'It turns like a top.', explain: 'The Earth spins around and around, which gives us day and night.' },
+      { q: 'How long does it take the Earth to spin around once?', choices: ['One hour', 'One whole day', 'One week', 'One year'], answer: 1, skill: 'Detail', hint: 'Think about how long a day is.', explain: 'It takes one whole day for the Earth to spin all the way around.' },
+      { q: 'Why is it daytime on your side of the Earth?', choices: ['The Sun turned on', 'Your side is facing the Sun', 'It is warmer', 'The stars went away'], answer: 1, skill: 'Why', hint: 'Which way is your side pointing?', explain: 'It is daytime because your side of the Earth is facing the Sun.' },
+      { q: 'The Sun does not really rise and set. What is really moving?', choices: ['The Sun', 'The stars', 'The Earth (and us)', 'The clouds'], answer: 2, skill: 'Inference', hint: 'The last sentence gives it away.', explain: 'It only looks like the Sun moves \u2014 really, it is the spinning Earth (and us) that moves.' }
+    ]
+  },
+  {
+    id: 'sp-stars', level: 1,
+    title: 'Counting the Stars',
+    paras: [
+      'On a clear night, look up at the sky. It is full of tiny, sparkling stars. It looks like you could count them, but you cannot. There are more stars than anyone could ever count.',
+      'Stars look tiny because they are so very far away. Really, each star is a giant ball of hot, glowing gas, just like our Sun. In fact, our Sun is a star too! It only looks big to us because it is the closest star to the Earth.'
+    ],
+    questions: [
+      { q: 'Why can\u2019t you count all the stars?', choices: ['They move too fast', 'There are more than anyone could ever count', 'They hide in clouds', 'They are invisible'], answer: 1, skill: 'Detail', hint: 'The sky is full of them.', explain: 'There are far more stars than anyone could ever count.' },
+      { q: 'Why do stars look so tiny?', choices: ['They really are tiny', 'They are very far away', 'They are made of dust', 'It is dark'], answer: 1, skill: 'Why', hint: 'Faraway things look small.', explain: 'Stars look tiny because they are so very far away from us.' },
+      { q: 'What is a star really made of?', choices: ['Ice', 'Rock', 'Hot, glowing gas', 'Water'], answer: 2, skill: 'Detail', hint: 'It is like our Sun.', explain: 'Each star is a giant ball of hot, glowing gas, just like our Sun.' },
+      { q: 'Which star is closest to the Earth?', choices: ['The Moon', 'The Sun', 'The North Star', 'Mars'], answer: 1, skill: 'Detail', hint: 'It looks big because it is near.', explain: 'Our Sun is the closest star to Earth, which is why it looks so big.' },
+      { q: 'What is this story mostly about?', choices: ['What stars really are', 'How to count to ten', 'Why the Moon glows', 'How rockets fly'], answer: 0, skill: 'Main idea', hint: 'The story keeps explaining stars.', explain: 'The whole story tells us what stars really are \u2014 giant balls of glowing gas, like our Sun.' }
+    ]
+  },
+  {
+    id: 'sp-clouds', level: 1,
+    title: 'Where Clouds Come From',
+    paras: [
+      'Clouds look soft, like cotton or fluffy pillows. But a cloud is really made of tiny drops of water. The drops are so small and light that they can float high up in the sky.',
+      'The water comes from lakes, rivers, and the sea. When the Sun warms the water, some of it rises up into the air as an invisible mist. High up, the mist turns back into tiny drops, and the drops gather together to make a cloud. When a cloud gets too heavy, the drops fall back down as rain.'
+    ],
+    questions: [
+      { q: 'What is a cloud really made of?', choices: ['Cotton', 'Tiny drops of water', 'Smoke', 'Feathers'], answer: 1, skill: 'Detail', hint: 'It only looks like a pillow.', explain: 'A cloud is really made of tiny drops of water.' },
+      { q: 'Why can the water drops float in the sky?', choices: ['They are very small and light', 'They have wings', 'The wind holds them', 'They are frozen'], answer: 0, skill: 'Why', hint: 'Think about their size.', explain: 'The drops are so small and light that they can float high up.' },
+      { q: 'Where does the water in clouds come from?', choices: ['From the stars', 'From lakes, rivers, and the sea', 'From the Moon', 'From the ground only'], answer: 1, skill: 'Detail', hint: 'Places with lots of water.', explain: 'The water rises from lakes, rivers, and the sea.' },
+      { q: 'What makes the water rise up into the air?', choices: ['The wind blows it', 'The Sun warms it', 'Birds carry it', 'It jumps'], answer: 1, skill: 'Inference', hint: 'What warms the water first?', explain: 'When the Sun warms the water, some of it rises into the air as invisible mist.' },
+      { q: 'What is this story mostly about?', choices: ['How clouds form', 'How to swim', 'Why the sea is salty', 'How birds fly'], answer: 0, skill: 'Main idea', hint: 'Follow the water\u2019s path in the story.', explain: 'The story explains, step by step, how clouds form from water and turn back into rain.' }
+    ]
+  },
+  {
+    id: 'sp-earth', level: 1,
+    title: 'Our Home, the Earth',
+    paras: [
+      'Earth is the planet we live on. From space, it looks like a big blue-and-green marble. The blue is water, and there is a lot of it \u2014 most of the Earth is covered by oceans. The green and brown parts are land, where people, animals, and plants live.',
+      'Earth is a special planet because it has just what living things need: air to breathe, water to drink, and warmth from the Sun. As far as we know, Earth is the only planet with life on it. That is why we must take good care of it.'
+    ],
+    questions: [
+      { q: 'What does Earth look like from space?', choices: ['A red ball', 'A blue-and-green marble', 'A gray rock', 'A bright star'], answer: 1, skill: 'Detail', hint: 'Think of its colors.', explain: 'From space, Earth looks like a big blue-and-green marble.' },
+      { q: 'What covers most of the Earth?', choices: ['Sand', 'Forests', 'Oceans (water)', 'Ice'], answer: 2, skill: 'Detail', hint: 'It is the blue part.', explain: 'Most of the Earth is covered by oceans \u2014 that is the blue we see.' },
+      { q: 'What three things do living things need that Earth has?', choices: ['Air, water, and warmth', 'Rocks, sand, and ice', 'Gold, silver, and iron', 'Wind, rain, and snow'], answer: 0, skill: 'Detail', hint: 'They are listed together.', explain: 'Earth has air to breathe, water to drink, and warmth from the Sun.' },
+      { q: 'Why is Earth a special planet?', choices: ['It is the biggest', 'As far as we know, it is the only one with life', 'It has the most water', 'It is the closest to the Sun'], answer: 1, skill: 'Why', hint: 'What does no other planet seem to have?', explain: 'Earth is special because, as far as we know, it is the only planet that has life.' },
+      { q: 'Why must we take good care of the Earth?', choices: ['It is very old', 'It is the only home for life that we know of', 'It is round', 'It spins fast'], answer: 1, skill: 'Inference', hint: 'What would happen if we had no other home?', explain: 'Since Earth is the only planet with life we know of, taking care of it protects the only home living things have.' }
+    ]
+  },
+  {
+    id: 'sp-astroday', level: 2,
+    title: 'An Astronaut\u2019s Busy Day',
+    paras: [
+      'Living on a space station is not at all like living on Earth. Because there is no gravity to hold things down, everything floats \u2014 including the astronauts! To sleep, an astronaut zips into a sleeping bag that is strapped to the wall, so they do not drift around and bump into things during the night.',
+      'Eating is tricky too. Food would float right off a plate, so astronauts eat from special pouches and sip drinks through straws. Even brushing your teeth takes practice, because water forms floating balls instead of pouring down. Astronauts also exercise for about two hours every single day. Without it, their muscles would grow weak up in space. A day in orbit is full of ordinary tasks done in extraordinary ways.'
+    ],
+    questions: [
+      { q: 'Why does everything float on the space station?', choices: ['The station shakes', 'There is no gravity to hold things down', 'The astronauts push things', 'It is very windy'], answer: 1, skill: 'Detail', hint: 'Gravity is what holds us down on Earth.', explain: 'With no gravity to hold things down, everything on the station floats.' },
+      { q: 'How do astronauts sleep safely?', choices: ['They lie on a soft bed', 'They zip into a bag strapped to the wall', 'They sleep standing up', 'They hold onto a rope'], answer: 1, skill: 'Detail', hint: 'It keeps them from drifting.', explain: 'Astronauts zip into a sleeping bag strapped to the wall so they do not float around at night.' },
+      { q: 'Why do astronauts drink through straws?', choices: ['It is more fun', 'Liquid would float away otherwise', 'They have no cups', 'It keeps drinks cold'], answer: 1, skill: 'Why', hint: 'Remember what floating does to liquids.', explain: 'Without gravity, liquid floats away, so astronauts sip from pouches through straws.' },
+      { q: 'How long do astronauts exercise each day?', choices: ['Ten minutes', 'One hour', 'About two hours', 'They do not exercise'], answer: 2, skill: 'Detail', hint: 'It is a big part of the day.', explain: 'Astronauts exercise for about two hours every single day.' },
+      { q: 'Why must astronauts exercise so much in space?', choices: ['To stay awake', 'Their muscles would grow weak without it', 'To keep warm', 'To pass the time'], answer: 1, skill: 'Inference', hint: 'What happens to muscles with no gravity to work against?', explain: 'In space there is no gravity to work against, so muscles weaken \u2014 daily exercise keeps astronauts strong.' }
+    ]
+  },
+  {
+    id: 'sp-junk', level: 2,
+    title: 'The Trouble with Space Junk',
+    paras: [
+      'When people send rockets and satellites into space, they often leave things behind. Old, broken satellites and small bits of metal keep circling the Earth. Scientists call all of this space junk. There are millions of pieces zooming around our planet right now.',
+      'Space junk may sound harmless, but it is not. The pieces travel so incredibly fast that even a tiny bolt could crack a spaceship window or wreck a working satellite. Scientists are now inventing clever ways to clean it up, such as giant nets and robot arms that can grab the junk and pull it down to burn up safely. Keeping space clean, it turns out, is just as important as keeping the Earth clean.'
+    ],
+    questions: [
+      { q: 'What do scientists call the leftover pieces in space?', choices: ['Star dust', 'Space junk', 'Moon rocks', 'Sky trash'], answer: 1, skill: 'Detail', hint: 'It is the name in the first paragraph.', explain: 'Scientists call the old, broken pieces circling Earth space junk.' },
+      { q: 'What kinds of things become space junk?', choices: ['Clouds and rain', 'Old satellites and bits of metal', 'Stars and comets', 'Air and gas'], answer: 1, skill: 'Detail', hint: 'They were sent up by people.', explain: 'Broken satellites and small bits of metal that people left behind become space junk.' },
+      { q: 'Why is even a tiny piece of space junk dangerous?', choices: ['It is poisonous', 'It travels so fast it can crack or wreck things', 'It is very heavy', 'It glows brightly'], answer: 1, skill: 'Why', hint: 'Speed makes a small thing powerful.', explain: 'Space junk moves so fast that even a tiny bolt can crack a window or destroy a satellite.' },
+      { q: 'What are scientists inventing to clean up the junk?', choices: ['Bigger rockets', 'Nets and robot arms', 'Space brooms', 'Giant magnets on Earth'], answer: 1, skill: 'Detail', hint: 'They grab the junk and pull it down.', explain: 'Scientists are building giant nets and robot arms to grab the junk and pull it down to burn up safely.' },
+      { q: 'What is this passage mostly about?', choices: ['How satellites are built', 'The problem of space junk and how to clean it', 'Why rockets are loud', 'How fast comets fly'], answer: 1, skill: 'Main idea', hint: 'What problem does the whole passage describe?', explain: 'The passage is about the problem of space junk and the clever ways scientists hope to clean it up.' }
+    ]
   }
 ];

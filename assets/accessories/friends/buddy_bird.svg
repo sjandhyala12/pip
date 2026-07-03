@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 170" width="200" height="170">
+  <title>Little Bird</title>
+  <desc>Reading Patch accessory &#34;buddy_bird&#34; (Friends, slot: buddy). Drawn in the pet&#39;s 0 0 200 170 frame so its position matches the live app.</desc>
+  <g stroke="#35315F" stroke-width="2.5" stroke-linejoin="round">
+  <ellipse cx="171" cy="141" rx="14" ry="12" fill="#FFC93C">
+  </ellipse>
+  <path d="M160 138 q-9 1 -13 7 q10 1 15 -2 Z" fill="#F7A93C">
+  </path>
+  <circle cx="176" cy="136" r="6.5" fill="#FFC93C">
+  </circle>
+  <path d="M182 137 l8 -1 -6 5 Z" fill="#F08A3C">
+  </path>
+  </g>
+  <circle cx="177" cy="135" r="1.8" fill="#35315F">
+  </circle>
+</svg>

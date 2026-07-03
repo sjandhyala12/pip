@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 170" width="200" height="170">
+  <title>Beach Day</title>
+  <desc>Reading Patch background &#34;beach_bg&#34;. Approximate swatch. Live CSS background: linear-gradient(#BFE9F5 0%, #BFE9F5 56%, #F5E2B0 56%, #EFD188 100%)</desc>
+  <defs>
+    <linearGradient id="g" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#BFE9F5"></stop>
+      <stop offset="33%" stop-color="#BFE9F5"></stop>
+      <stop offset="67%" stop-color="#F5E2B0"></stop>
+      <stop offset="100%" stop-color="#EFD188"></stop>
+    </linearGradient>
+  </defs>
+  <rect x="0" y="0" width="200" height="170" rx="18" fill="url(#g)"></rect>
+</svg>

@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 170" width="200" height="170">
+  <title>Party Hat</title>
+  <desc>Reading Patch accessory &#34;party&#34; (Hats, slot: hat). Drawn in the pet&#39;s 0 0 200 170 frame so its position matches the live app.</desc>
+  <polygon points="100,6 79,54 121,54" fill="#F26D9C" stroke="#35315F" stroke-width="3" stroke-linejoin="round">
+  </polygon>
+  <polyline points="84,42 90,36 96,42 102,36 108,42" fill="none" stroke="#FFFFFF" stroke-width="2.5" opacity="0.8">
+  </polyline>
+  <circle cx="100" cy="7" r="6" fill="#FFD23F" stroke="#35315F" stroke-width="2">
+  </circle>
+</svg>

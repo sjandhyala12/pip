@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 170" width="200" height="170">
+  <title>Sea-Green Scarf</title>
+  <desc>Reading Patch accessory &#34;scarf_teal&#34; (Scarves, slot: neck). Drawn in the pet&#39;s 0 0 200 170 frame so its position matches the live app.</desc>
+  <path d="M64 118 Q100 137 136 118 L138 129 Q100 150 62 129 Z" fill="#3AA6B0" stroke="#35315F" stroke-width="3" stroke-linejoin="round">
+  </path>
+  <path d="M118 126 l12 24 -13 4 -8 -22 Z" fill="#2E8A93" stroke="#35315F" stroke-width="3" stroke-linejoin="round">
+  </path>
+</svg>

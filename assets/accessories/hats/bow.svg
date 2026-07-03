@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 170" width="200" height="170">
+  <title>Big Bow</title>
+  <desc>Reading Patch accessory &#34;bow&#34; (Hats, slot: hat). Drawn in the pet&#39;s 0 0 200 170 frame so its position matches the live app.</desc>
+  <path d="M100 42 L76 30 Q72 42 76 54 Z" fill="#F26D9C" stroke="#35315F" stroke-width="3" stroke-linejoin="round">
+  </path>
+  <path d="M100 42 L124 30 Q128 42 124 54 Z" fill="#F26D9C" stroke="#35315F" stroke-width="3" stroke-linejoin="round">
+  </path>
+  <circle cx="100" cy="42" r="7" fill="#E14E82" stroke="#35315F" stroke-width="2.5">
+  </circle>
+</svg>

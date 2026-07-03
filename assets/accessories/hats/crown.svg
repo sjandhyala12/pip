@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 170" width="200" height="170">
+  <title>Golden Crown</title>
+  <desc>Reading Patch accessory &#34;crown&#34; (Hats, slot: hat). Drawn in the pet&#39;s 0 0 200 170 frame so its position matches the live app.</desc>
+  <path d="M74 52 L78 24 L92 42 L100 20 L108 42 L122 24 L126 52 Z" fill="#FFC93C" stroke="#35315F" stroke-width="3" stroke-linejoin="round">
+  </path>
+  <circle cx="100" cy="34" r="3" fill="#E14E82">
+  </circle>
+  <circle cx="80" cy="40" r="2.5" fill="#6B79E8">
+  </circle>
+  <circle cx="120" cy="40" r="2.5" fill="#5DB075">
+  </circle>
+</svg>

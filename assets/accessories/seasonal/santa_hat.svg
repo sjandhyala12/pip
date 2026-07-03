@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 170" width="200" height="170">
+  <title>Santa Hat</title>
+  <desc>Reading Patch accessory &#34;santa_hat&#34; (Seasonal, slot: hat). Drawn in the pet&#39;s 0 0 200 170 frame so its position matches the live app.</desc>
+  <path d="M70 48 Q78 16 112 20 Q130 22 130 40 L130 50 Z" fill="#E1584E" stroke="#35315F" stroke-width="3" stroke-linejoin="round">
+  </path>
+  <rect x="66" y="46" width="66" height="10" rx="5" fill="#FFFFFF" stroke="#35315F" stroke-width="2.5">
+  </rect>
+  <circle cx="130" cy="22" r="7.5" fill="#FFFFFF" stroke="#35315F" stroke-width="2.5">
+  </circle>
+</svg>

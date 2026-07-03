@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 170" width="200" height="170">
+  <title>Pumpkin Pal</title>
+  <desc>Reading Patch accessory &#34;pumpkin_buddy&#34; (Seasonal, slot: buddy). Drawn in the pet&#39;s 0 0 200 170 frame so its position matches the live app.</desc>
+  <g stroke="#35315F" stroke-width="2.5" stroke-linejoin="round">
+  <ellipse cx="172" cy="143" rx="15" ry="12" fill="#F08A3C">
+  </ellipse>
+  <path d="M166 143 q0 -9 6 -9 q6 0 6 9" fill="none" stroke-width="1.6">
+  </path>
+  <path d="M172 131 q2 -6 7 -5" fill="none" stroke="#5DB075" stroke-width="3">
+  </path>
+  </g>
+</svg>

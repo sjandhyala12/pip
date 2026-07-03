@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 170" width="200" height="170">
+  <title>Top Hat</title>
+  <desc>Reading Patch accessory &#34;tophat&#34; (Hats, slot: hat). Drawn in the pet&#39;s 0 0 200 170 frame so its position matches the live app.</desc>
+  <rect x="68" y="46" width="64" height="8" rx="4" fill="#3A3550" stroke="#35315F" stroke-width="3">
+  </rect>
+  <rect x="80" y="16" width="40" height="32" rx="3" fill="#3A3550" stroke="#35315F" stroke-width="3">
+  </rect>
+  <rect x="80" y="39" width="40" height="7" fill="#E14E82">
+  </rect>
+</svg>

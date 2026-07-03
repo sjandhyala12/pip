@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 170" width="200" height="170">
+  <title>Starry Night</title>
+  <desc>Reading Patch background &#34;night&#34;. Approximate swatch. Live CSS background: radial-gradient(circle at 22% 26%, #FFFFFF 1.4px, transparent 1.6px), radial-gradient(circle at 70% 18%, #FFFFFF 1.2px, transparent 1.4px), radial-gradient(circle at 82% 60%, #FFFFFF 1.4px, transparent 1.6px), radial-gradient(circle at 34% 70%, #FFFFFF 1.1px, transparent 1.3px), linear-gradient(#2E2A55, #453F79)</desc>
+  <defs>
+    <linearGradient id="g" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#FFFFFF"></stop>
+      <stop offset="20%" stop-color="#FFFFFF"></stop>
+      <stop offset="40%" stop-color="#FFFFFF"></stop>
+      <stop offset="60%" stop-color="#FFFFFF"></stop>
+      <stop offset="80%" stop-color="#2E2A55"></stop>
+      <stop offset="100%" stop-color="#453F79"></stop>
+    </linearGradient>
+  </defs>
+  <rect x="0" y="0" width="200" height="170" rx="18" fill="url(#g)"></rect>
+  <g fill="#FFFFFF"><circle cx="44" cy="46" r="3"></circle><circle cx="150" cy="34" r="2.4"></circle><circle cx="168" cy="104" r="3"></circle><circle cx="70" cy="120" r="2.4"></circle></g>
+</svg>

@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 170" width="200" height="170">
+  <title>Flower Crown</title>
+  <desc>Reading Patch accessory &#34;flower_crown&#34; (Seasonal, slot: hat). Drawn in the pet&#39;s 0 0 200 170 frame so its position matches the live app.</desc>
+  <path d="M70 48 Q100 40 130 48" fill="none" stroke="#5DB075" stroke-width="4">
+  </path>
+  <g stroke="#35315F" stroke-width="2">
+  <circle cx="74" cy="44" r="6" fill="#F58AB0">
+  </circle>
+  <circle cx="90" cy="37" r="6.5" fill="#F7C948">
+  </circle>
+  <circle cx="108" cy="37" r="6.5" fill="#8E6FD0">
+  </circle>
+  <circle cx="124" cy="44" r="6" fill="#F58AB0">
+  </circle>
+  </g>
+  <g fill="#FFFFFF">
+  <circle cx="90" cy="37" r="2">
+  </circle>
+  <circle cx="108" cy="37" r="2">
+  </circle>
+  </g>
+</svg>

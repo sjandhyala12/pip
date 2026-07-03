@@ -8,8 +8,10 @@
  * Screen flow:  home → cat → read → quiz → done
  */
 
-import { CATEGORIES } from './passages/index.js';
+import { CATEGORIES, LEVELS } from './passages/index.js';
 import { petSVG } from './pets/index.js';
+import { ACCESSORIES, ACC_BY_ID, accOverlay, accBg, SHOP_GROUPS, OVERLAY_SLOTS, inSeason, MONTH_NAMES } from './accessories.js';
+import { speechSupported, speak, stopSpeech, isSpeaking } from './speech.js';
 
 /* ---------- constants ---------- */
 const STAGES = [10, 25, 50, 80];              // berry thresholds for growth
@@ -26,9 +28,12 @@ const state = {
   phase: 'answering', lastCorrect: false, quizStarted: false,
   startBerries: 0,
   berries: {}, records: {}, stats: {},
+  earned: {}, owned: {}, equipped: {},        // growth total / shop items owned / worn per slot
   textSize: 22,
   qStart: 0, qAnswered: false,
-  gateOpen: false, gate: null
+  gateOpen: false, gate: null,
+  levelFilter: 0,                               // 0 = all, or 1/2/3
+  readAloud: true                               // read-aloud buttons on/off (parent setting)
 };
 
 function loadProgress() {
@@ -39,11 +44,16 @@ function loadProgress() {
       state.berries = d.berries || {};
       state.records = d.records || {};
       state.stats = d.stats || {};
+      state.owned = d.owned || {};
+      state.equipped = d.equipped || {};
+      if (typeof d.readAloud === 'boolean') state.readAloud = d.readAloud;
+      // `earned` (lifetime, drives growth) defaults to the current wallet for older saves.
+      state.earned = d.earned || Object.assign({}, state.berries);
     }
   } catch (e) { /* ignore */ }
 }
 function saveProgress() {
-  try { localStorage.setItem(KEY, JSON.stringify({ berries: state.berries, records: state.records, stats: state.stats })); }
+  try { localStorage.setItem(KEY, JSON.stringify({ berries: state.berries, records: state.records, stats: state.stats, earned: state.earned, owned: state.owned, equipped: state.equipped, readAloud: state.readAloud })); }
   catch (e) { /* ignore */ }
 }
 
@@ -51,6 +61,26 @@ function saveProgress() {
 const cat = () => CATEGORIES.find(c => c.id === state.catId) || null;
 const passage = () => { const c = cat(); return c ? c.passages.find(p => p.id === state.pid) : null; };
 const totalBerries = () => Object.values(state.berries).reduce((a, b) => a + b, 0);
+const growthOf = (id) => state.earned[id] || 0;   // lifetime berries → pet growth
+const walletOf = (id) => state.berries[id] || 0;  // spendable berries
+
+// Pet illustration plus any worn accessories (overlays + background).
+function petArt(c, stageKey) {
+  const eq = state.equipped[c.id] || {};
+  const idx = STAGE_KEYS.indexOf(stageKey);
+  const bg = eq.bg ? accBg(eq.bg) : '';
+  let ov = '';
+  OVERLAY_SLOTS.forEach(slot => {
+    const item = eq[slot] && ACC_BY_ID[eq[slot]];
+    if (item && idx >= (item.minStage || 0)) ov += accOverlay(eq[slot]);
+  });
+  const overlay = ov ? `<svg class="pet-acc" viewBox="0 0 200 170" preserveAspectRatio="xMidYMid meet">${ov}</svg>` : '';
+  return `<div class="pet-stack"${bg ? ` style="background:${bg}"` : ''}>${petSVG(c.species, stageKey, c.fill)}${overlay}</div>`;
+}
+
+// The Berry Shop unlocks once a world's pet reaches the "big" stage.
+const SHOP_STAGE = 3;
+const shopUnlocked = (id) => stageIdx(growthOf(id)) >= SHOP_STAGE;
 
 function stageIdx(b) { let i = 0; STAGES.forEach((min, k) => { if (b >= min) i = k + 1; }); return i; }
 function stageLabel(idx, name) {
@@ -85,24 +115,31 @@ function starRow(n, size) {
   return out;
 }
 function catVars(c) { return `--accent:${c.accent};--chip-bg:${c.chipBg};--chip-fg:${c.chipFg};`; }
+function levelBadge(lv) {
+  const L = LEVELS[lv];
+  return `<span class="level-badge" style="background:${L.bg};color:${L.fg}"><span class="level-dots">${
+    [1,2,3].map(n => `<i style="background:${n <= lv ? L.color : 'currentColor'};opacity:${n <= lv ? 1 : 0.25}"></i>`).join('')
+  }</span>${L.name}</span>`;
+}
 
 /* ---------- views ---------- */
 function viewHome() {
   const cards = CATEGORIES.map(c => {
-    const b = state.berries[c.id] || 0;
-    const idx = stageIdx(b);
+    const g = growthOf(c.id);
+    const w = walletOf(c.id);
+    const idx = stageIdx(g);
     const next = STAGES[idx];
     const cur = idx === 0 ? 0 : STAGES[idx - 1];
-    const pct = next ? Math.round(((b - cur) / (next - cur)) * 100) : 100;
+    const pct = next ? Math.round(((g - cur) / (next - cur)) * 100) : 100;
     const done = c.passages.filter(p => state.records[p.id]).length;
     return `
       <button class="world-card" style="${catVars(c)}" data-action="openCat" data-cat="${c.id}">
-        <div class="pet pet-sm">${petSVG(c.species, STAGE_KEYS[idx], c.fill)}</div>
+        <div class="pet pet-sm">${petArt(c, STAGE_KEYS[idx])}</div>
         <div class="world-name">${esc(c.name)}</div>
         <div class="pet-line">${esc(c.petName)} ${esc(c.petKind)} &middot; ${esc(stageLabel(idx, c.petName))}</div>
         <div class="progress-track"><div class="progress-fill" style="width:${pct}%"></div></div>
         <div class="card-foot">
-          <span class="foot-berry">${berryIcon(c.fill, 15)} ${b}</span>
+          <span class="foot-berry">${berryIcon(c.fill, 15)} ${w}</span>
           <span>${done}/${c.passages.length} stories</span>
           <span class="foot-visit">Visit &rarr;</span>
         </div>
@@ -124,27 +161,50 @@ function viewHome() {
 
 function viewCat() {
   const c = cat();
-  const b = state.berries[c.id] || 0;
-  const idx = stageIdx(b);
+  const g = growthOf(c.id);
+  const w = walletOf(c.id);
+  const idx = stageIdx(g);
   const next = STAGES[idx];
   const cur = idx === 0 ? 0 : STAGES[idx - 1];
-  const pct = next ? Math.round(((b - cur) / (next - cur)) * 100) : 100;
+  const pct = next ? Math.round(((g - cur) / (next - cur)) * 100) : 100;
   const done = c.passages.filter(p => state.records[p.id]).length;
   const nextText = next
-    ? (next - b) + ' more berries until ' + stageLabel(idx + 1, c.petName)
+    ? (next - g) + ' more berries until ' + stageLabel(idx + 1, c.petName)
     : c.petName + ' is fully grown \u2014 amazing!';
-  const cards = c.passages.map((p, i) => {
+  const shown = state.levelFilter
+    ? c.passages.filter(p => p.level === state.levelFilter)
+    : c.passages;
+  const cards = shown.map((p) => {
+    const i = c.passages.indexOf(p);
     const rec = state.records[p.id];
     const st = rec ? rec.stars : 0;
     return `
       <button class="story-card" data-action="openStory" data-pid="${p.id}">
         <div class="story-top"><span class="num-chip">${i + 1}</span><span class="story-title">${esc(p.title)}</span></div>
+        <div class="story-mid">${levelBadge(p.level)}</div>
         <div class="story-bottom">
           <span class="stars">${starRow(st)}</span>
           <span class="status">${rec ? 'Read again' : 'Read'} &rarr;</span>
         </div>
       </button>`;
   }).join('');
+  const emptyMsg = shown.length ? '' : `<div class="filter-empty">No ${esc(LEVELS[state.levelFilter].name)} stories in this world yet.</div>`;
+
+  const seg = [
+    { v: 0, label: 'All' },
+    { v: 1, label: LEVELS[1].name },
+    { v: 2, label: LEVELS[2].name },
+    { v: 3, label: LEVELS[3].name }
+  ].map(o => {
+    const active = state.levelFilter === o.v;
+    const count = o.v ? c.passages.filter(p => p.level === o.v).length : c.passages.length;
+    return `<button class="level-seg${active ? ' active' : ''}" data-action="setLevel" data-level="${o.v}">${o.label}<span class="seg-count">${count}</span></button>`;
+  }).join('');
+  const filterBar = `
+    <div class="level-filter">
+      <span class="filter-label">Level</span>
+      <div class="level-segs">${seg}</div>
+    </div>`;
   return `
     <div class="screen" style="${catVars(c)}">
       <header class="cat-header">
@@ -153,19 +213,29 @@ function viewCat() {
       </header>
       <main class="cat-main">
         <div class="pet-panel">
-          <div class="pet">${petSVG(c.species, STAGE_KEYS[idx], c.fill)}</div>
+          <div class="pet">${petArt(c, STAGE_KEYS[idx])}</div>
           <div class="stage-name">${esc(stageLabel(idx, c.petName))}</div>
           <div class="stage-caption">${esc(caption(idx, c.petName))}</div>
           <div class="progress-track"><div class="progress-fill" style="width:${pct}%"></div></div>
           <div class="next-stage">${esc(nextText)}</div>
-          <div class="pet-hint">Every right answer earns berries that help ${esc(c.petName)} grow.</div>
+          ${shopUnlocked(c.id)
+            ? `<button class="shop-btn" data-action="shop">
+            <span class="shop-btn-wallet">${berryIcon('#FFFFFF', 16)} ${w}</span>
+            <span>Berry Shop</span><span class="shop-btn-arrow">&rarr;</span>
+          </button>`
+            : `<button class="shop-btn locked" data-action="shopLocked" title="Grow ${esc(c.petName)} to Big to open the shop">
+            <span class="lock-ico">&#128274;</span>
+            <span>Berry Shop opens when ${esc(c.petName)} is Big</span>
+          </button>`}
         </div>
         <div>
           <div class="stories-head">
             <div class="stories-title">Stories</div>
             <div class="stories-count">${done} of ${c.passages.length} finished</div>
           </div>
+          ${filterBar}
           <div class="story-grid">${cards}</div>
+          ${emptyMsg}
         </div>
       </main>
     </div>`;
@@ -182,11 +252,13 @@ function viewRead() {
         <div class="read-topbar">
           <button class="back-btn" data-action="backCat">&larr; Stories</button>
           <div class="text-ctrls">
+            ${speechSupported && state.readAloud ? `<button class="listen-btn" data-action="speak" data-speak="passage" title="Read the story aloud">&#128266; Listen</button>` : ''}
             <button class="text-btn" data-action="textDown" title="Smaller text">A-</button>
             <button class="text-btn" data-action="textUp" title="Bigger text">A+</button>
           </div>
         </div>
         <div class="read-card">
+          <div class="read-meta">${levelBadge(p.level)}</div>
           <h1 class="read-title">${esc(p.title)}</h1>
           ${paras}
         </div>
@@ -240,7 +312,7 @@ function viewQuiz() {
   let bubble = '';
   if (state.phase !== 'answering') {
     const f = feedback();
-    const idx = stageIdx(state.berries[c.id] || 0);
+    const idx = stageIdx(growthOf(c.id));
     const berryLine = f.showBerry
       ? `<div class="bubble-berry">+${state.lastEarned} ${state.lastEarned === 1 ? 'berry' : 'berries'} for ${esc(c.petName)}</div>` : '';
     bubble = `
@@ -250,7 +322,7 @@ function viewQuiz() {
           <div class="bubble-text">${esc(f.text)}</div>
           ${berryLine}
         </div>
-        <div class="bubble-pet">${petSVG(c.species, STAGE_KEYS[idx], c.fill)}</div>
+        <div class="bubble-pet">${petArt(c, STAGE_KEYS[idx])}</div>
       </div>`;
   }
 
@@ -262,7 +334,7 @@ function viewQuiz() {
           <div class="dots">${dots}</div>
         </div>
         <div class="quiz-card">
-          <div class="qmeta"><span class="qnum">Question ${state.qIndex + 1} of ${total}</span>${skillChip}</div>
+          <div class="qmeta"><span class="qnum">Question ${state.qIndex + 1} of ${total}</span>${skillChip}${speechSupported && state.readAloud ? `<button class="q-speak" data-action="speak" data-speak="question" title="Read the question aloud" aria-label="Read the question aloud">&#128266;</button>` : ''}</div>
           <div class="question">${esc(q.q)}</div>
           <div class="choices">${choices}</div>
           ${nextRow}
@@ -277,7 +349,7 @@ function viewDone() {
   const p = passage();
   const total = p.questions.length;
   const starN = state.results.filter(r => r !== 'miss').length;
-  const idx = stageIdx(state.berries[c.id] || 0);
+  const idx = stageIdx(growthOf(c.id));
   const grew = idx > stageIdx(state.startBerries);
 
   const recap = state.results.map((r, i) => {
@@ -303,7 +375,7 @@ function viewDone() {
     <div class="screen" style="${catVars(c)}">
       <div class="done-wrap">
         <div class="done-card">
-          <div class="pet">${petSVG(c.species, STAGE_KEYS[idx], c.fill)}</div>
+          <div class="pet">${petArt(c, STAGE_KEYS[idx])}</div>
           <h1 class="done-title">You finished the story!</h1>
           <div class="done-sub">${esc(p.title)} &middot; ${starN} out of ${total} correct</div>
           <div class="done-stars">${starRow(starN, 34)}</div>
@@ -319,6 +391,80 @@ function viewDone() {
           <button class="btn-3d btn-ghost" data-action="home">All worlds</button>
         </div>
       </div>
+    </div>`;
+}
+
+/* ---------- berry shop ---------- */
+function shopPreview(c, a) {
+  const bg = a.slot === 'bg' ? a.bg : '';
+  const ov = a.art ? `<svg class="pet-acc" viewBox="0 0 200 170">${a.art}</svg>` : '';
+  return `<div class="shop-prev"${bg ? ` style="background:${bg}"` : ''}>${petSVG(c.species, 'kid', c.fill)}${ov}</div>`;
+}
+
+function viewShop() {
+  const c = cat();
+  const w = walletOf(c.id);
+  const idx = stageIdx(growthOf(c.id));
+  const owned = state.owned[c.id] || [];
+  const eq = state.equipped[c.id] || {};
+
+  const groups = SHOP_GROUPS.map(group => {
+    const month = new Date().getMonth();
+    // Seasonal items only show in their months — but keep any the child already owns.
+    let list = ACCESSORIES.filter(a => a.group === group);
+    let note = '';
+    if (group === 'Seasonal') {
+      list = list.filter(a => inSeason(a, month) || owned.includes(a.id));
+      note = `<span class="section-note">${MONTH_NAMES[month]} picks &middot; new treats each season</span>`;
+      if (!list.length) {
+        return `
+      <div class="shop-section">
+        <div class="shop-section-head">${group} ${note}</div>
+        <div class="season-empty">No seasonal treats this month — check back soon!</div>
+      </div>`;
+      }
+    }
+    const items = list.map(a => {
+      const isOwned = owned.includes(a.id);
+      const isEq = eq[a.slot] === a.id;
+      const afford = w >= a.price;
+      const outOfSeason = group === 'Seasonal' && !inSeason(a, month);
+      let btn;
+      if (isEq) btn = `<button class="shop-act wearing" data-action="equip" data-item="${a.id}">Wearing &check; &middot; take off</button>`;
+      else if (isOwned) btn = `<button class="shop-act own" data-action="equip" data-item="${a.id}">Wear it</button>`;
+      else btn = `<button class="shop-act buy${afford ? '' : ' cant'}" data-action="buy" data-item="${a.id}"${afford ? '' : ' disabled'}>${berryIcon(afford ? '#FFFFFF' : '#B8AF98', 15)} ${a.price}</button>`;
+      return `
+        <div class="shop-item${isEq ? ' is-worn' : ''}">
+          ${outOfSeason ? '<span class="season-tag">out of season</span>' : ''}
+          ${shopPreview(c, a)}
+          <div class="shop-name">${esc(a.name)}</div>
+          ${btn}
+        </div>`;
+    }).join('');
+    return `
+      <div class="shop-section">
+        <div class="shop-section-head">${group}${group === 'Seasonal' ? ' ' + note : ''}</div>
+        <div class="shop-grid">${items}</div>
+      </div>`;
+  }).join('');
+
+  return `
+    <div class="screen" style="${catVars(c)}">
+      <header class="cat-header">
+        <button class="back-btn" data-action="backCat">&larr; ${esc(c.name)}</button>
+        <span class="chip">Berry Shop</span>
+      </header>
+      <main class="shop-main">
+        <div class="shop-hero">
+          <div class="shop-hero-pet">${petArt(c, STAGE_KEYS[idx])}</div>
+          <div class="shop-hero-info">
+            <div class="shop-hero-name">${esc(c.petName)}\u2019s wardrobe</div>
+            <div class="shop-hero-sub">Spend berries on hats, glasses, scarves, little friends, seasonal treats, and backgrounds. Spending never un-grows your pet \u2014 the berries you earn keep growing ${esc(c.petName)} no matter what.</div>
+            <div class="shop-wallet">${berryIcon(c.fill, 18)} <strong>${w}</strong> berries to spend</div>
+          </div>
+        </div>
+        ${groups}
+      </main>
     </div>`;
 }
 
@@ -438,6 +584,18 @@ function viewDashboard() {
         <div class="skill-bars">${skillBars}</div>
       </div>
 
+      <div class="panel setting-panel">
+        <div>
+          <div class="panel-title" style="margin-bottom:2px">Read-aloud</div>
+          <div class="panel-sub" style="margin-bottom:0">${speechSupported
+            ? 'Shows a Listen button on stories and a speaker on questions, so a child can hear the words.'
+            : 'This browser does not support read-aloud.'}</div>
+        </div>
+        <button class="toggle${state.readAloud ? ' on' : ''}" data-action="toggleReadAloud" role="switch" aria-checked="${state.readAloud}"${speechSupported ? '' : ' disabled'}>
+          <span class="toggle-track"><span class="toggle-knob"></span></span><span class="toggle-label">${state.readAloud ? 'On' : 'Off'}</span>
+        </button>
+      </div>
+
       <div class="panel danger">
         <div>
           <div class="panel-title" style="margin-bottom:2px">Reset progress</div>
@@ -453,9 +611,34 @@ function viewDashboard() {
 /* ---------- render ---------- */
 const root = document.getElementById('app');
 function render() {
-  const view = { home: viewHome, cat: viewCat, read: viewRead, quiz: viewQuiz, done: viewDone, dashboard: viewDashboard }[state.screen];
+  stopSpeech();   // never let read-aloud bleed across screens
+  const view = { home: viewHome, cat: viewCat, read: viewRead, quiz: viewQuiz, done: viewDone, dashboard: viewDashboard, shop: viewShop }[state.screen];
   root.innerHTML = view();
   window.scrollTo(0, 0);
+}
+
+/* ---------- read-aloud ---------- */
+function resetSpeakButtons() {
+  document.querySelectorAll('[data-action="speak"]').forEach(b => setSpeakButton(b, false));
+}
+function setSpeakButton(btn, on) {
+  if (!btn) return;
+  btn.classList.toggle('speaking', on);
+  if (btn.dataset.speak === 'passage') btn.innerHTML = on ? '&#9632; Stop' : '&#128266; Listen';
+}
+function handleSpeak(btn) {
+  if (isSpeaking()) { stopSpeech(); resetSpeakButtons(); return; }
+  resetSpeakButtons();
+  const p = passage();
+  if (!p) return;
+  let text = '';
+  if (btn.dataset.speak === 'passage') {
+    text = p.title + '. ' + p.paras.join(' ');
+  } else {
+    const q = p.questions[state.qIndex];
+    text = q.q + ' ' + q.choices.map((c, i) => 'ABCD'[i] + '. ' + c).join('. ');
+  }
+  speak(text, { onStart: () => setSpeakButton(btn, true), onEnd: () => setSpeakButton(btn, false) });
 }
 
 /* ---------- actions ---------- */
@@ -463,7 +646,7 @@ function openStory(pid) {
   Object.assign(state, {
     screen: 'read', pid, qIndex: 0, attempt: 0, wrong: [], results: [],
     runEarned: 0, lastEarned: 0, phase: 'answering', lastCorrect: false,
-    quizStarted: false, startBerries: state.berries[state.catId] || 0,
+    quizStarted: false, startBerries: growthOf(state.catId),
     qStart: 0, qAnswered: false
   });
 }
@@ -510,15 +693,43 @@ function finish() {
   const starN = state.results.filter(r => r !== 'miss').length;
   const prev = state.records[state.pid];
   state.records[state.pid] = { stars: Math.max(prev ? prev.stars : 0, starN) };
-  state.berries[state.catId] = (state.berries[state.catId] || 0) + state.runEarned;
+  state.berries[state.catId] = (state.berries[state.catId] || 0) + state.runEarned;   // spendable wallet
+  state.earned[state.catId] = (state.earned[state.catId] || 0) + state.runEarned;      // lifetime → growth
   saveProgress();
   state.screen = 'done';
   render();
 }
 
+/* buy an accessory (spends wallet berries) and wear it right away */
+function buyItem(id) {
+  const c = cat();
+  const a = ACC_BY_ID[id];
+  if (!a || walletOf(c.id) < a.price) return;
+  const owned = state.owned[c.id] || (state.owned[c.id] = []);
+  if (owned.includes(id)) return;
+  state.berries[c.id] = walletOf(c.id) - a.price;
+  owned.push(id);
+  const eq = state.equipped[c.id] || (state.equipped[c.id] = {});
+  eq[a.slot] = id;
+  saveProgress();
+  render();
+}
+
+/* put on / take off an owned accessory (one item per slot) */
+function toggleEquip(id) {
+  const c = cat();
+  const a = ACC_BY_ID[id];
+  if (!a || !(state.owned[c.id] || []).includes(id)) return;
+  const eq = state.equipped[c.id] || (state.equipped[c.id] = {});
+  eq[a.slot] = eq[a.slot] === id ? null : id;
+  saveProgress();
+  render();
+}
+
 function reset() {
-  if (!window.confirm('Start over? This clears all stars, berries, and stats for every pet on this device.')) return;
+  if (!window.confirm('Start over? This clears all stars, berries, shop items, and stats for every pet on this device.')) return;
   state.berries = {}; state.records = {}; state.stats = {};
+  state.earned = {}; state.owned = {}; state.equipped = {};
   saveProgress();
   render();
 }
@@ -542,7 +753,7 @@ root.addEventListener('click', e => {
   if (!el) return;
   const a = el.dataset.action;
   switch (a) {
-    case 'openCat': state.catId = el.dataset.cat; state.screen = 'cat'; render(); break;
+    case 'openCat': state.catId = el.dataset.cat; state.levelFilter = 0; state.screen = 'cat'; render(); break;
     case 'home': state.screen = 'home'; render(); break;
     case 'openStory': openStory(el.dataset.pid); render(); break;
     case 'backCat': state.screen = 'cat'; render(); break;
@@ -553,6 +764,13 @@ root.addEventListener('click', e => {
     case 'reset': reset(); break;
     case 'dashboard': if (!state.gateOpen) state.gate = makeGate(); state.screen = 'dashboard'; render(); break;
     case 'gateSubmit': handleGate(); break;
+    case 'shop': if (shopUnlocked(state.catId)) { state.screen = 'shop'; render(); } break;
+    case 'shopLocked': { const c = cat(); alert('The Berry Shop opens once ' + c.petName + ' grows to the Big stage. Keep reading to earn berries!'); break; }
+    case 'speak': handleSpeak(el); break;
+    case 'toggleReadAloud': state.readAloud = !state.readAloud; saveProgress(); render(); break;
+    case 'buy': buyItem(el.dataset.item); break;
+    case 'equip': toggleEquip(el.dataset.item); break;
+    case 'setLevel': state.levelFilter = parseInt(el.dataset.level, 10); render(); break;
     case 'textUp': state.textSize = Math.min(MAX_TEXT, state.textSize + 2); render(); break;
     case 'textDown': state.textSize = Math.max(MIN_TEXT, state.textSize - 2); render(); break;
   }

@@ -75,8 +75,8 @@ closely. Where a value maps cleanly onto an MUI concept (theme palette, typograp
 
 ## Screens / views
 
-State machine: `home → category → read → quiz → done` (plus a `dashboard` screen). Back
-navigation returns up the chain.
+State machine: `home → category → read → quiz → done` (plus a `dashboard` screen and a per-world
+`shop` screen, both reached from their entry points). Back navigation returns up the chain.
 There is no URL routing in the prototype; you may add MUI/React Router routes if desired
 (e.g. `/`, `/world/:id`, `/world/:id/story/:pid`), but keep all state client-side.
 
@@ -131,6 +131,15 @@ There is no URL routing in the prototype; you may add MUI/React Router routes if
 
 ## Interactions & behavior
 
+### Difficulty levels
+Each passage gets a level (1 Starter / 2 Growing / 3 Challenge). It is computed in
+`passages/index.js` from a Flesch–Kincaid-style grade estimate over the passage text
+(`gradeEstimate` → `levelFor`; thresholds: <2.9 = 1, <3.9 = 2, else 3) and stamped onto
+`p.level`, unless the passage object already defines `level` (manual override wins). `LEVELS`
+(exported alongside `CATEGORIES`) holds each level's name, blurb, and colors. The category
+view renders a segmented Level filter (`state.levelFilter`, 0 = all) and a badge per card;
+port the filter as component state and the badge as a small presentational component.
+
 ### Parent dashboard & timing capture
 - **Access:** home footer → “Parent dashboard,” behind a grown-ups gate (a random `a × b` the
   parent answers; pass is session-only via `gateOpen`).
@@ -179,14 +188,27 @@ Min tap target ~44px; passages never below 18px (size adjustable A-/A+).
 Suggested shape (Context or a small store; MUI is view-only):
 ```
 progress = {
-  berries: { [worldId]: number },              // per-world berry totals
-  records: { [storyId]: { stars: number } },   // best stars per story
-  stats:   { [worldId]: {                       // parent-dashboard analytics
+  berries:  { [worldId]: number },             // spendable wallet (shop currency)
+  earned:   { [worldId]: number },             // lifetime berries → pet growth (never decreases)
+  records:  { [storyId]: { stars: number } },  // best stars per story
+  owned:    { [worldId]: string[] },           // accessory ids purchased
+  equipped: { [worldId]: { hat, face, bg } },  // worn accessory id per slot
+  stats:    { [worldId]: {                      // parent-dashboard analytics
     times: number[],                            // seconds-to-answer per question
     skills: { [skill]: { total, firstCorrect } }
   } }
 }
 ```
+- **Berry Shop** (`shop` screen, `accessories.js`): per-world cosmetics grouped into Hats /
+  Glasses / Scarves / Friends / Seasonal / Backgrounds, one item per slot
+  (`hat`/`face`/`neck`/`buddy`/`bg`). **Locked until the pet reaches the Big stage**
+  (`stageIdx(earned) >= 3`); the world's shop button shows a locked state until then. Buying
+  spends `berries` and auto-equips; growth uses `earned`, so spending never changes the pet's
+  stage. Worn items overlay the pet SVG in the same `0 0 200 170` viewBox (`accOverlay`, painted
+  in `OVERLAY_SLOTS` order) or set a CSS background (`accBg`); port as a `<Pet>` prop like
+  `accessories={{hat,face,neck,buddy,bg}}`. Seasonal items carry a `months` array (0-indexed)
+  and only appear in-season (`inSeason(item, new Date().getMonth())`); already-owned items stay
+  wearable year-round.
 - Persist `progress` to `localStorage` under a versioned key (this build uses `reading-patch-v1`).
   Load on mount; write on every finish and on "Start over" (which resets to `{}`).
 - Transient run state (only during a story): `worldId, storyId, qIndex, attempt, wrong[],
@@ -240,4 +262,9 @@ component — the SVG paths copy over directly. The float is a simple CSS keyfra
   `localStorage` persistence. The clearest reference for behavior.
 - `styles.css` — every visual token and the responsive breakpoints (560 / 760 / 900px).
 - `pets/*.js` — pet SVGs, one file per animal, each with five growth stages.
+- `accessories.js` — Berry Shop catalog (slots, groups, prices, seasonal `months`, SVG art).
+- `speech.js` — optional read-aloud (Web Speech API). `speak()/stopSpeech()/isSpeaking()`;
+  render() cancels speech on every screen change. Gated by a `readAloud` setting (parent
+  dashboard toggle); buttons hidden when unsupported. Port with `window.speechSynthesis` or a
+  React TTS hook.
 - `passages/index.js` + `passages/*.js` + `passages.js` — all content and per-world config.

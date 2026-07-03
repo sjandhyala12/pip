@@ -151,5 +151,95 @@ export const PASSAGES = [
       { q: 'How did Sofia feel before the trade?', choices: ['Delighted with the noodles', 'Sad and puzzled about her lunch', 'Angry at Miguel', 'Too full to eat'], answer: 1, skill: 'Inference', hint: 'She stared sadly and looked puzzled.', explain: 'Sofia stared sadly into the box and held up the mystery noodles with a puzzled look — she was just as confused as Miguel.' },
       { q: 'How did the kids stop future mix-ups?', choices: ['They bought new boxes', 'They marked their boxes with different stickers', 'They stopped bringing lunch', 'They ate together every day'], answer: 1, skill: 'Detail', hint: 'A rocket and a shark.', explain: 'Miguel already had his rocket sticker, and Sofia drew a shark on hers — now the identical boxes were easy to tell apart.' }
     ]
+  },
+  {
+    id: 'my-locker', level: 2,
+    title: 'The Locker Mix-Up',
+    paras: [
+      'Ella spun the dial on her locker, but it would not open. She tried her combination once, twice, three times. Nothing. Then she noticed something odd: there was a small green sticker on the locker door. Ella\u2019s locker never had a green sticker.',
+      'She looked closely at the number on the door: 114. But her locker was number 141! In her hurry that morning, she had walked to the wrong row. Ella laughed at herself, moved one row over, and her real locker \u2014 number 141 \u2014 popped open on the very first try. Mystery solved: the lock was fine all along. Ella had just been standing in the wrong place.'
+    ],
+    questions: [
+      { q: 'What problem did Ella have at first?', choices: ['She lost her books', 'Her locker would not open', 'She forgot her lunch', 'She was late for class'], answer: 1, skill: 'Detail', hint: 'She kept spinning the dial.', explain: 'Ella\u2019s locker would not open, no matter how many times she tried her combination.' },
+      { q: 'What odd clue did Ella notice?', choices: ['A green sticker on the door', 'A broken dial', 'A note taped inside', 'A missing handle'], answer: 0, skill: 'Detail', hint: 'Her locker never had one.', explain: 'She noticed a green sticker that her own locker never had \u2014 an important clue.' },
+      { q: 'What was the real reason the locker would not open?', choices: ['The lock was broken', 'She was at the wrong locker', 'Someone changed her combination', 'The door was stuck'], answer: 1, skill: 'Inference', hint: 'Compare the number on the door to her real number.', explain: 'The locker said 114, but Ella\u2019s was 141 \u2014 she was simply standing at the wrong locker.' },
+      { q: 'What was Ella\u2019s real locker number?', choices: ['114', '141', '411', '144'], answer: 1, skill: 'Detail', hint: 'It is the one that finally opened.', explain: 'Her real locker was number 141, and it opened on the first try.' },
+      { q: 'What is the big idea of this mystery?', choices: ['Locks break often', 'Looking closely at clues can solve a puzzle', 'Green stickers are bad luck', 'School lockers are hard'], answer: 1, skill: 'Main idea', hint: 'What helped Ella figure it out?', explain: 'By noticing the sticker and checking the number, Ella solved the mix-up. Careful clue-reading solves the puzzle.' }
+    ]
+  },
+  {
+    id: 'my-museum', level: 3,
+    title: 'The Museum Mystery',
+    paras: [
+      'On the class trip to the museum, Ravi noticed something strange about the giant dinosaur display. The sign said the skeleton had been standing in that exact spot for fifty years. But the floor beneath it was bright and shiny, while the floor everywhere else in the room was faded and scuffed from years and years of footsteps.',
+      'Ravi raised his hand and asked the guide about it. The guide smiled, looking surprised. \u201cYou have sharp eyes,\u201d she said. \u201cThe real skeleton was moved to a new room just last month. This one is brand new \u2014 a copy made from plastic bones.\u201d Ravi had spotted the truth from a single clue: the floor under a fifty-year-old display would never look that new. A good detective, he decided, notices the things that do not fit.'
+    ],
+    questions: [
+      { q: 'What did the sign near the skeleton claim?', choices: ['The skeleton was fake', 'The skeleton had stood there for fifty years', 'The museum was closing', 'The skeleton could move'], answer: 1, skill: 'Detail', hint: 'It was about time.', explain: 'The sign said the skeleton had been standing in that exact spot for fifty years.' },
+      { q: 'What clue did Ravi notice?', choices: ['The floor under the skeleton was bright and shiny', 'The skeleton was too small', 'The lights were off', 'The sign was torn'], answer: 0, skill: 'Detail', hint: 'Compare that floor to the rest of the room.', explain: 'Ravi saw that the floor under the skeleton was bright and new, unlike the worn floor everywhere else.' },
+      { q: 'Why was the bright floor so strange?', choices: ['Floors are always shiny', 'A fifty-year-old display should have a worn, faded floor beneath it', 'The room was newly built', 'Someone had just mopped'], answer: 1, skill: 'Why', hint: 'Fifty years of footsteps would do what to a floor?', explain: 'If the display had truly stood there fifty years, the floor beneath would be worn and faded like the rest \u2014 not bright and new.' },
+      { q: 'What was the real story behind the skeleton?', choices: ['It had been there fifty years', 'It was a new plastic copy; the real one was moved last month', 'It was stolen', 'It was never real'], answer: 1, skill: 'Inference', hint: 'The guide explained it.', explain: 'The real skeleton was moved to a new room last month, and this one was a brand-new plastic copy \u2014 which is why the floor was new.' },
+      { q: 'What is the big idea of this mystery?', choices: ['Museums are boring', 'A good detective notices the things that do not fit', 'Dinosaurs are huge', 'Plastic bones are fake'], answer: 1, skill: 'Main idea', hint: 'What did Ravi decide at the end?', explain: 'Ravi solved it by spotting something that did not fit. The big idea: good detectives notice what does not belong.' }
+    ]
+  },
+  {
+    id: 'my-lighthouse', level: 3,
+    title: 'The Lighthouse Signal',
+    paras: [
+      'Every summer, Grandpa told Nora that the old lighthouse across the bay was empty and dark. So one foggy evening, Nora was puzzled to see a light blinking from its tower \u2014 on, off, on, off, in a steady pattern. Nobody was supposed to be out there at all.',
+      'Nora grabbed a flashlight and carefully counted the blinks: three short, three long, three short. She had read about that pattern in a book. It was an old distress signal that means \u201chelp!\u201d Nora ran to tell her grandfather, who quickly called the harbor rescue team. It turned out that two fishermen had gotten stranded on the rocks and climbed up to the lighthouse to signal for help. Because Nora noticed the pattern and knew what it meant, the fishermen were rescued that very night.'
+    ],
+    questions: [
+      { q: 'What had Grandpa always said about the lighthouse?', choices: ['It was full of visitors', 'It was empty and dark', 'It was Nora\u2019s to use', 'It was going to be torn down'], answer: 1, skill: 'Detail', hint: 'That is why the light was surprising.', explain: 'Grandpa always said the old lighthouse was empty and dark.' },
+      { q: 'Why was the blinking light so puzzling to Nora?', choices: ['It was the wrong color', 'No one was supposed to be out there', 'It was too bright', 'It was daytime'], answer: 1, skill: 'Inference', hint: 'Remember what Grandpa had told her.', explain: 'Since the lighthouse was supposed to be empty and dark, a blinking light meant someone unexpected was there.' },
+      { q: 'What pattern of blinks did Nora count?', choices: ['Three short, three long, three short', 'Two long, two short', 'One blink over and over', 'Five quick flashes'], answer: 0, skill: 'Detail', hint: 'She had read about it in a book.', explain: 'Nora counted three short, three long, three short \u2014 a pattern she recognized from a book.' },
+      { q: 'What did the blinking pattern mean?', choices: ['\u201cGo away\u201d', '\u201cGood night\u201d', '\u201cHelp!\u201d \u2014 a distress signal', '\u201cThe lighthouse is open\u201d'], answer: 2, skill: 'Detail', hint: 'It is why she called for rescue.', explain: 'The pattern was an old distress signal that means \u201chelp!\u201d' },
+      { q: 'What is the big idea of this mystery?', choices: ['Lighthouses are scary', 'Noticing a clue and knowing what it means can save the day', 'Fog is dangerous', 'Fishermen should stay home'], answer: 1, skill: 'Main idea', hint: 'What did Nora\u2019s knowledge lead to?', explain: 'Nora noticed the signal and knew its meaning, so the fishermen were rescued. Knowing what a clue means can save the day.' }
+    ]
+  },
+  {
+    id: 'my-recipe', level: 3,
+    title: 'The Missing Recipe',
+    paras: [
+      'Grandma\u2019s famous cookies had a secret ingredient, and she had always promised to teach Max someday. But when Grandma got sick and had to stay in the hospital for a week, Max wanted to bake the cookies himself to cheer her up. The trouble was, the recipe card was missing its most important line \u2014 the secret ingredient had been smudged away.',
+      'So Max became a detective in the kitchen. He sniffed the empty cookie jar: it smelled faintly of oranges. He checked the cupboard and found a jar of dried orange peel, half used, sitting right next to the flour. On the calendar, he saw that Grandma always baked on the same day she bought oranges at the market. Max was sure now. He stirred in a spoonful of orange peel, and when Grandma tasted the cookies at the hospital, her eyes went wide. \u201cYou found my secret!\u201d she laughed.'
+    ],
+    questions: [
+      { q: 'Why did Max want to bake the cookies?', choices: ['For a school project', 'To cheer up his sick grandma', 'To sell them', 'For a contest'], answer: 1, skill: 'Detail', hint: 'Grandma was in the hospital.', explain: 'Max wanted to bake the cookies to cheer up Grandma while she was sick in the hospital.' },
+      { q: 'What was wrong with the recipe card?', choices: ['It was torn in half', 'The secret ingredient was smudged away', 'It was written in another language', 'It was too old to read'], answer: 1, skill: 'Detail', hint: 'One important line was missing.', explain: 'The most important line \u2014 the secret ingredient \u2014 had been smudged off the card.' },
+      { q: 'What clue did the empty cookie jar give Max?', choices: ['It smelled faintly of oranges', 'It had a note inside', 'It was cracked', 'It was full of crumbs'], answer: 0, skill: 'Detail', hint: 'He used his nose.', explain: 'The jar smelled faintly of oranges, which pointed Max toward the secret ingredient.' },
+      { q: 'How did Max figure out the secret ingredient?', choices: ['He guessed randomly', 'He put clues together \u2014 the smell, the peel, the calendar', 'Grandma told him', 'He read it online'], answer: 1, skill: 'Inference', hint: 'He gathered several clues.', explain: 'Max combined the orange smell, the half-used orange peel by the flour, and the calendar to conclude the secret was orange peel.' },
+      { q: 'What is the big idea of this mystery?', choices: ['Cookies are hard to bake', 'Gathering clues carefully can solve a puzzle', 'Grandmas keep secrets', 'Oranges are healthy'], answer: 1, skill: 'Main idea', hint: 'How did Max find the answer?', explain: 'Max solved the missing-ingredient mystery by gathering and piecing together clues.' }
+    ]
+  },
+  {
+    id: 'my-treehouse', level: 3,
+    title: 'The Treehouse Clue',
+    paras: [
+      'The kids in the neighborhood shared a treehouse, and they kept a jar of coins there to buy snacks. One Saturday, the jar was completely empty. Everyone said it was not them, and they started pointing fingers. Zoe decided to figure out what really happened before anyone got blamed unfairly.',
+      'She climbed up and looked around very carefully. The coins were gone, but there was no broken lock and no sign that a person had climbed up \u2014 the muddy ladder had no footprints on it at all. Then Zoe spotted a shiny coin wedged high in a nearby branch, and above it, a big, messy nest. She remembered that crows love to collect shiny things. The \u201cthief\u201d was not a person at all. A crow had been carrying the coins away, one by one, to decorate its nest.'
+    ],
+    questions: [
+      { q: 'What did the kids keep in the jar?', choices: ['Marbles', 'Coins to buy snacks', 'Bugs', 'Buttons'], answer: 1, skill: 'Detail', hint: 'It is why it mattered when it went empty.', explain: 'They kept a jar of coins in the treehouse to buy snacks.' },
+      { q: 'Why did Zoe decide to investigate?', choices: ['She wanted the coins', 'So no one would get blamed unfairly', 'She was bored', 'Her friends dared her'], answer: 1, skill: 'Why', hint: 'People were already pointing fingers.', explain: 'Kids were blaming each other, so Zoe wanted to find the truth before anyone got blamed unfairly.' },
+      { q: 'What did the muddy ladder tell Zoe?', choices: ['Someone had climbed up', 'No person had climbed up \u2014 there were no footprints', 'It was about to break', 'It had been cleaned'], answer: 1, skill: 'Inference', hint: 'What was missing from the mud?', explain: 'The muddy ladder had no footprints, so no person had climbed up to take the coins.' },
+      { q: 'Who was the real \u201cthief\u201d?', choices: ['A neighbor kid', 'A crow', 'A squirrel', 'The wind'], answer: 1, skill: 'Detail', hint: 'It liked shiny things and built a nest.', explain: 'A crow, which loves shiny things, had been carrying the coins to its nest.' },
+      { q: 'What is the big idea of this mystery?', choices: ['Crows are pests', 'Careful clues can clear someone who was wrongly blamed', 'Treehouses are unsafe', 'Never keep coins outside'], answer: 1, skill: 'Main idea', hint: 'What did Zoe\u2019s investigating prevent?', explain: 'By reading the clues, Zoe found the real culprit and kept her friends from being blamed unfairly.' }
+    ]
+  },
+  {
+    id: 'my-garden', level: 3,
+    title: 'The Garden Bandit',
+    paras: [
+      'Mr. Alvarez was upset. Every morning, some of the ripe tomatoes in his garden were gone, with only a few chewed bits left behind. He was sure a neighbor kid was sneaking in to take them. But his granddaughter Lucia asked if she could look for clues before he accused anyone.',
+      'Lucia examined the garden like a detective. The fence had no gate left open, and the only gap under it was far too small for a person to fit through. In the soft dirt she found tiny paw prints with sharp claw marks, leading straight to a hole beneath the fence. That night, the family watched quietly from the window and saw a fat raccoon squeeze through the gap and help itself to a tomato. Lucia had solved it: the garden bandit had four legs and a striped tail, and no kid was to blame after all.'
+    ],
+    questions: [
+      { q: 'What kept disappearing from the garden?', choices: ['Ripe tomatoes', 'Flowers', 'Garden tools', 'Water'], answer: 0, skill: 'Detail', hint: 'Only chewed bits were left.', explain: 'Every morning, ripe tomatoes were gone, with only chewed bits left behind.' },
+      { q: 'Why did Lucia want to look for clues first?', choices: ['She loved tomatoes', 'So her grandfather would not blame a kid unfairly', 'She was hungry', 'Her grandfather asked her to'], answer: 1, skill: 'Why', hint: 'Mr. Alvarez was about to accuse someone.', explain: 'Lucia wanted to find the truth before her grandfather blamed a neighbor kid who might be innocent.' },
+      { q: 'What did Lucia find in the soft dirt?', choices: ['A shoe print', 'Tiny paw prints with claw marks', 'A dropped tomato', 'A key'], answer: 1, skill: 'Detail', hint: 'They led to a hole under the fence.', explain: 'She found tiny paw prints with sharp claw marks leading to a hole beneath the fence.' },
+      { q: 'Who was the real garden bandit?', choices: ['A neighbor kid', 'A raccoon', 'A rabbit', 'A dog'], answer: 1, skill: 'Inference', hint: 'It had a striped tail and four legs.', explain: 'The clues \u2014 and the family\u2019s late-night watch \u2014 revealed a raccoon was taking the tomatoes.' },
+      { q: 'What is the big idea of this mystery?', choices: ['Raccoons are cute', 'Gather evidence before blaming someone', 'Tomatoes grow fast', 'Fences keep out everything'], answer: 1, skill: 'Main idea', hint: 'What did Lucia do before anyone was accused?', explain: 'Lucia looked for evidence before anyone was blamed, and it revealed the true culprit. Gather proof before pointing fingers.' }
+    ]
   }
 ];

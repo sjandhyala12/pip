@@ -33,6 +33,65 @@ button { font-family: inherit; }
 
 /* ---------- shared pieces ---------- */
 .pet-svg { width: 100%; height: auto; display: block; animation: petfloat 4s ease-in-out infinite; }
+.pet-stack { position: relative; border-radius: 22px; }
+.pet-stack .pet-svg { position: relative; z-index: 1; }
+.pet-acc { position: absolute; inset: 0; width: 100%; height: 100%; z-index: 2; pointer-events: none; animation: petfloat 4s ease-in-out infinite; }
+
+/* ---------- berry shop ---------- */
+.shop-btn {
+  margin-top: 16px; width: 100%; display: flex; align-items: center; justify-content: center; gap: 8px;
+  background: var(--accent); color: #FFFFFF; border: 2px solid #35315F; border-radius: 14px;
+  padding: 11px 14px; font-family: 'Baloo 2', cursive; font-weight: 800; font-size: 15px;
+  cursor: pointer; box-shadow: 0 4px 0 #35315F; transition: transform 0.1s ease;
+}
+.shop-btn:hover { transform: translateY(-1px); }
+.shop-btn:active { transform: translateY(2px); box-shadow: 0 2px 0 #35315F; }
+.shop-btn.locked {
+  background: #F1E9D8; color: #9B916F; border-color: #DDD2B8; box-shadow: 0 4px 0 #DDD2B8;
+  cursor: not-allowed; font-size: 13.5px;
+}
+.shop-btn.locked:hover { transform: none; }
+.shop-btn.locked:active { transform: none; box-shadow: 0 4px 0 #DDD2B8; }
+.lock-ico { font-size: 15px; filter: grayscale(0.3); }
+.shop-btn-wallet { display: inline-flex; align-items: center; gap: 5px; background: rgba(255,255,255,0.22); border-radius: 999px; padding: 3px 9px; }
+.shop-main { max-width: 940px; margin: 0 auto; padding: 8px 28px 0; }
+.shop-hero {
+  display: flex; gap: 20px; align-items: center; background: #FFFFFF; border: 2px solid var(--border);
+  border-radius: 24px; padding: 20px 24px; box-shadow: 0 6px 0 rgba(53,49,95,0.07);
+}
+.shop-hero-pet { width: 130px; flex: none; }
+.shop-hero-name { font-family: 'Baloo 2', cursive; font-size: 22px; font-weight: 800; }
+.shop-hero-sub { font-size: 14px; color: var(--muted); font-weight: 600; margin-top: 4px; line-height: 1.5; }
+.shop-wallet { margin-top: 10px; display: inline-flex; align-items: center; gap: 7px; background: var(--chip-bg); color: var(--chip-fg); border-radius: 999px; padding: 6px 14px; font-weight: 700; font-size: 14px; }
+.shop-wallet strong { font-family: 'Baloo 2', cursive; font-size: 17px; }
+.shop-section { margin-top: 24px; }
+.shop-section-head { font-family: 'Baloo 2', cursive; font-size: 19px; font-weight: 800; margin-bottom: 12px; }
+.section-note { font-family: 'Nunito', sans-serif; font-size: 12.5px; font-weight: 700; color: var(--muted); margin-left: 8px; }
+.season-empty { font-size: 14px; font-weight: 600; color: var(--muted); background: #FFFFFF; border: 2px dashed var(--border); border-radius: 16px; padding: 18px; text-align: center; }
+.season-tag { position: absolute; top: 10px; right: 10px; background: var(--chip-bg); color: var(--chip-fg); font-size: 10.5px; font-weight: 800; border-radius: 999px; padding: 3px 8px; }
+.shop-item { position: relative; }
+.shop-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; }
+.shop-item {
+  background: #FFFFFF; border: 2px solid var(--border); border-radius: 20px; padding: 14px;
+  text-align: center; display: flex; flex-direction: column; align-items: center; gap: 10px;
+  box-shadow: 0 5px 0 rgba(53,49,95,0.06);
+}
+.shop-item.is-worn { border-color: var(--accent); }
+.shop-prev { width: 100px; height: 85px; border-radius: 16px; background: #F3EBDA; position: relative; overflow: hidden; display: flex; align-items: center; justify-content: center; }
+.shop-prev .pet-svg { width: 100%; height: 100%; animation: none; }
+.shop-prev .pet-acc { animation: none; }
+.shop-name { font-size: 14px; font-weight: 800; color: var(--ink); }
+.shop-act {
+  border: 2px solid #35315F; border-radius: 12px; padding: 8px 12px; font-family: 'Baloo 2', cursive;
+  font-weight: 800; font-size: 14px; cursor: pointer; width: 100%; box-shadow: 0 3px 0 #35315F;
+  display: inline-flex; align-items: center; justify-content: center; gap: 6px; transition: transform 0.1s ease;
+}
+.shop-act.buy { background: var(--accent); color: #FFFFFF; }
+.shop-act.buy.cant { background: #EFE7D5; color: #B8AF98; border-color: #D9CFB8; box-shadow: 0 3px 0 #D9CFB8; cursor: not-allowed; }
+.shop-act.own { background: #FFFFFF; color: var(--chip-fg); }
+.shop-act.wearing { background: var(--chip-bg); color: var(--chip-fg); border-color: var(--chip-fg); box-shadow: 0 3px 0 rgba(53,49,95,0.15); font-size: 12.5px; }
+.shop-act:not(.cant):hover { transform: translateY(-1px); }
+.shop-act:not(.cant):active { transform: translateY(2px); box-shadow: 0 1px 0 #35315F; }
 
 .btn-3d {
   border: 2px solid var(--ink);
@@ -146,9 +205,42 @@ button { font-family: inherit; }
   font-family: 'Baloo 2', cursive; font-weight: 800; font-size: 15px;
 }
 .story-title { font-family: 'Baloo 2', cursive; font-size: 18px; font-weight: 800; line-height: 1.25; }
+.story-mid { display: flex; }
 .story-bottom { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
 .stars { display: inline-flex; gap: 3px; }
 .status { font-size: 13px; font-weight: 800; color: var(--chip-fg); }
+
+/* ---------- difficulty levels ---------- */
+.level-badge {
+  display: inline-flex; align-items: center; gap: 6px;
+  border-radius: 999px; padding: 3px 10px 3px 8px;
+  font-size: 12px; font-weight: 800;
+}
+.level-dots { display: inline-flex; gap: 2px; align-items: center; }
+.level-dots i { width: 5px; height: 5px; border-radius: 999px; display: inline-block; }
+.level-filter { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; flex-wrap: wrap; }
+.filter-label { font-size: 13px; font-weight: 800; color: var(--muted); text-transform: uppercase; letter-spacing: 0.04em; }
+.level-segs {
+  display: inline-flex; background: #F3EBDA; border: 2px solid var(--border);
+  border-radius: 999px; padding: 3px; gap: 2px;
+}
+.level-seg {
+  display: inline-flex; align-items: center; gap: 6px;
+  border: none; background: transparent; cursor: pointer;
+  font-family: 'Nunito', sans-serif; font-weight: 800; font-size: 13.5px; color: var(--muted);
+  padding: 6px 13px; border-radius: 999px; transition: background 0.12s ease, color 0.12s ease;
+}
+.level-seg:hover { color: var(--ink); }
+.level-seg.active { background: #FFFFFF; color: var(--ink); box-shadow: 0 2px 0 rgba(53,49,95,0.08); }
+.seg-count {
+  font-size: 11px; font-weight: 800; background: rgba(53,49,95,0.08);
+  color: inherit; border-radius: 999px; padding: 1px 6px; min-width: 16px; text-align: center;
+}
+.level-seg.active .seg-count { background: var(--chip-bg); color: var(--chip-fg); }
+.filter-empty {
+  text-align: center; color: var(--muted); font-weight: 700; font-size: 15px;
+  padding: 30px 0; border: 2px dashed var(--border); border-radius: 18px; margin-top: 2px;
+}
 
 /* ---------- read ---------- */
 .read-wrap { max-width: 780px; margin: 0 auto; padding: 26px 28px 0; }
@@ -159,10 +251,41 @@ button { font-family: inherit; }
   background: #FFFFFF; color: var(--ink); font-family: 'Baloo 2', cursive; font-weight: 800;
   cursor: pointer; font-size: 15px;
 }
+.listen-btn {
+  display: inline-flex; align-items: center; gap: 6px; height: 34px; padding: 0 14px;
+  white-space: nowrap; line-height: 1;
+  border-radius: 12px; border: 2px solid #35315F; background: var(--accent); color: #FFFFFF;
+  font-family: 'Baloo 2', cursive; font-weight: 800; font-size: 14px; cursor: pointer;
+  box-shadow: 0 3px 0 #35315F; transition: transform 0.1s ease;
+}
+.listen-btn:hover { transform: translateY(-1px); }
+.listen-btn:active { transform: translateY(2px); box-shadow: 0 1px 0 #35315F; }
+.listen-btn.speaking { background: #E96A5C; }
+.q-speak {
+  margin-left: auto; width: 34px; height: 34px; flex: none; border-radius: 10px;
+  border: 2px solid var(--border); background: #FFFFFF; cursor: pointer; font-size: 15px;
+  display: inline-flex; align-items: center; justify-content: center; transition: background 0.12s ease;
+}
+.q-speak:hover { border-color: var(--accent); }
+.q-speak.speaking { background: var(--chip-bg); border-color: var(--chip-fg); }
+.qmeta { display: flex; align-items: center; gap: 10px; }
+.setting-panel { display: flex; align-items: center; justify-content: space-between; gap: 14px; }
+.toggle {
+  flex: none; display: inline-flex; align-items: center; gap: 9px; cursor: pointer;
+  border: none; background: none; padding: 4px;
+  font-family: 'Baloo 2', cursive; font-weight: 800; font-size: 14px; color: var(--muted);
+}
+.toggle-track { position: relative; width: 40px; height: 22px; flex: none; border-radius: 999px; background: #FFFFFF; border: 2px solid var(--border); transition: background 0.15s ease, border-color 0.15s ease; }
+.toggle-knob { position: absolute; top: 1px; left: 1px; width: 16px; height: 16px; border-radius: 999px; background: var(--muted); transition: transform 0.15s ease, background 0.15s ease; }
+.toggle.on { color: var(--chip-fg); }
+.toggle.on .toggle-track { background: var(--chip-bg); border-color: var(--chip-fg); }
+.toggle.on .toggle-knob { transform: translateX(18px); background: var(--chip-fg); }
+.toggle:disabled { opacity: 0.5; cursor: not-allowed; }
 .read-card {
   background: #FFFFFF; border: 2px solid var(--border); border-radius: 28px;
   padding: 34px 38px 30px; box-shadow: 0 6px 0 rgba(53,49,95,0.07); animation: fadeUp 0.35s ease both;
 }
+.read-meta { margin-bottom: 14px; }
 .read-title { font-family: 'Baloo 2', cursive; font-size: 32px; font-weight: 800; margin: 0 0 18px; line-height: 1.15; }
 .read-p { font-size: var(--psize, 22px); line-height: 1.8; font-weight: 600; margin: 0 0 16px; text-wrap: pretty; }
 .center { text-align: center; margin-top: 24px; }
@@ -316,6 +439,7 @@ button { font-family: inherit; }
 }
 @media (max-width: 760px) {
   .cat-main { grid-template-columns: 1fr; }
+  .shop-grid { grid-template-columns: repeat(3, 1fr); }
 }
 @media (max-width: 560px) {
   .header, .home-grid, .parent-corner { padding-left: 16px; padding-right: 16px; }
@@ -330,4 +454,7 @@ button { font-family: inherit; }
   .dash-wrap { padding-left: 16px; padding-right: 16px; }
   .summary-row { grid-template-columns: 1fr; }
   .skill-bar-row { grid-template-columns: 92px 1fr 44px; }
+  .shop-main { padding-left: 16px; padding-right: 16px; }
+  .shop-grid { grid-template-columns: repeat(2, 1fr); }
+  .shop-hero { flex-direction: column; text-align: center; }
 }

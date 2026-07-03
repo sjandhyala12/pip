@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 170" width="200" height="170">
+  <title>Butterfly Friend</title>
+  <desc>Reading Patch accessory &#34;buddy_fly&#34; (Friends, slot: buddy). Drawn in the pet&#39;s 0 0 200 170 frame so its position matches the live app.</desc>
+  <g stroke="#35315F" stroke-width="2.2" stroke-linejoin="round">
+  <ellipse cx="166" cy="120" rx="8" ry="10" fill="#8E6FD0">
+  </ellipse>
+  <ellipse cx="182" cy="120" rx="8" ry="10" fill="#B49BEA">
+  </ellipse>
+  </g>
+  <line x1="174" y1="111" x2="174" y2="130" stroke="#35315F" stroke-width="3">
+  </line>
+  <path d="M174 111 l-4 -5 M174 111 l4 -5" stroke="#35315F" stroke-width="2">
+  </path>
+</svg>

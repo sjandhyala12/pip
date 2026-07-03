@@ -151,5 +151,80 @@ export const PASSAGES = [
       { q: 'What did Country Mouse mean by "barley in peace" over "cake in fear"?', choices: ['He hates cake', 'A simple, safe life beats a fancy, dangerous one', 'Barley is tastier than cake', 'He was still hungry'], answer: 1, skill: 'Inference', hint: 'What came WITH the fancy food?', explain: 'The city\u2019s riches came with constant danger. Country Mouse decided a plain life you can enjoy calmly is better than luxury you enjoy in fear.' },
       { q: 'What is the lesson of this fable?', choices: ['Cities are always bad', 'A simple life in peace can be worth more than riches with worry', 'Never visit relatives', 'Cats live in cities'], answer: 1, skill: 'Main idea', hint: 'It is about what makes a good life.', explain: 'The fable asks what really matters: fancy things, or feeling safe and content? For Country Mouse, peace won easily.' }
     ]
+  },
+  {
+    id: 'fb-goose', level: 2,
+    title: 'The Goose and the Golden Egg',
+    paras: [
+      'A farmer once had a very special goose. Every single morning, it laid one shining egg made of pure gold. The farmer sold each golden egg and slowly grew rich. But one egg a day was just not enough for him. He wanted to be rich right now.',
+      'The greedy farmer thought, \u201cIf the goose can make gold, it must be full of gold inside. I will get it all at once!\u201d So he cut the goose open. But inside, the goose was just like any other goose \u2014 there was no pile of gold at all. Now the goose was gone, and so were the golden eggs. The farmer had lost everything because he could not wait.'
+    ],
+    questions: [
+      { q: 'What did the special goose lay each morning?', choices: ['A plain egg', 'A golden egg', 'A silver coin', 'A feather'], answer: 1, skill: 'Detail', hint: 'It was made of gold.', explain: 'Every morning the goose laid one shining egg made of pure gold.' },
+      { q: 'Why was the farmer not happy with one egg a day?', choices: ['The eggs were too small', 'He wanted to be rich right away', 'He did not like gold', 'The goose was noisy'], answer: 1, skill: 'Why', hint: 'He was impatient.', explain: 'One egg a day was not enough for the greedy farmer \u2014 he wanted to be rich right now.' },
+      { q: 'Why did the farmer cut the goose open?', choices: ['To cook it', 'He thought it was full of gold inside', 'To set it free', 'To count its feathers'], answer: 1, skill: 'Inference', hint: 'What did he wrongly believe was inside?', explain: 'The farmer believed the goose must be full of gold, so he cut it open to get it all at once.' },
+      { q: 'What did the farmer find inside the goose?', choices: ['A mountain of gold', 'No gold \u2014 it was an ordinary goose', 'More eggs', 'A golden feather'], answer: 1, skill: 'Detail', hint: 'It was just like any other goose.', explain: 'Inside, the goose was ordinary \u2014 there was no gold at all.' },
+      { q: 'What is the moral of this fable?', choices: ['Geese are magic', 'Being greedy can make you lose what you already have', 'Gold is heavy', 'Farmers work hard'], answer: 1, skill: 'Main idea', hint: 'The farmer ended up with nothing.', explain: 'The farmer\u2019s greed cost him the goose and the eggs. The moral: greed can make you lose what you already have.' }
+    ]
+  },
+  {
+    id: 'fb-milkmaid', level: 3,
+    title: 'The Milkmaid and Her Pail',
+    paras: [
+      'A young milkmaid named Patty was walking to the market with a pail of fresh milk balanced carefully on her head. As she walked, she began to daydream. \u201cI\u2019ll sell this milk and buy some eggs,\u201d she thought. \u201cThe eggs will hatch into chickens. I\u2019ll sell the chickens and buy a beautiful new dress. In my lovely dress, everyone at the fair will admire me, and I\u2019ll toss my head proudly at all the boys.\u201d',
+      'Lost in her happy daydream, Patty tossed her head right then and there \u2014 just as she had imagined doing at the fair. But the pail tumbled off, and all the milk splashed across the dusty road. With the milk gone, there would be no eggs, no chickens, and no new dress after all. Patty walked home with an empty pail, having learned not to count her chickens before they hatch.'
+    ],
+    questions: [
+      { q: 'What was Patty carrying to the market?', choices: ['A basket of eggs', 'A pail of milk on her head', 'A new dress', 'A cage of chickens'], answer: 1, skill: 'Detail', hint: 'It was balanced on her head.', explain: 'Patty was carrying a pail of fresh milk balanced on her head.' },
+      { q: 'What did Patty daydream about buying, in order?', choices: ['Eggs, then chickens, then a new dress', 'A dress, then a house', 'Chickens, then a cow', 'Nothing at all'], answer: 0, skill: 'Detail', hint: 'Follow her chain of plans.', explain: 'Patty planned to buy eggs, which would hatch into chickens, which she would sell to buy a new dress.' },
+      { q: 'Why did the milk spill?', choices: ['She tripped on a rock', 'She tossed her head, just like in her daydream', 'A dog bumped her', 'The pail had a hole'], answer: 1, skill: 'Why', hint: 'She acted out her daydream without thinking.', explain: 'Caught up in her daydream, Patty tossed her head as she imagined \u2014 and the pail tumbled off.' },
+      { q: 'What did Patty have left in the end?', choices: ['A new dress', 'An empty pail and nothing else', 'A basket of eggs', 'Many chickens'], answer: 1, skill: 'Inference', hint: 'The milk was gone, so the whole plan was gone.', explain: 'With the milk spilled, there were no eggs, chickens, or dress \u2014 Patty had only an empty pail.' },
+      { q: 'What is the moral of this fable?', choices: ['Never carry milk', 'Do not count on things that have not happened yet', 'Dresses are expensive', 'Markets are far away'], answer: 1, skill: 'Main idea', hint: 'Think about \u201ccounting chickens before they hatch.\u201d', explain: 'Patty planned on riches she did not have yet, and lost it all. The moral: do not count your chickens before they hatch.' }
+    ]
+  },
+  {
+    id: 'fb-dogbone', level: 3,
+    title: 'The Dog and His Reflection',
+    paras: [
+      'A lucky dog had found a big, juicy bone. He carried it proudly in his mouth as he trotted toward home, pleased with his fine prize. On the way, he had to cross a narrow wooden bridge over a still, quiet stream.',
+      'As he crossed, the dog happened to look down and saw another dog in the water below, carrying a bone that looked even bigger than his own. Of course, it was only his own reflection \u2014 but the greedy dog did not understand that. Wanting both bones for himself, he opened his mouth to snatch the other one. The moment he did, his own bone dropped into the water with a splash and sank out of sight. By trying to grab more, the dog ended up with nothing at all.'
+    ],
+    questions: [
+      { q: 'What had the dog found?', choices: ['A ball', 'A big, juicy bone', 'A stick', 'A bridge'], answer: 1, skill: 'Detail', hint: 'He carried it proudly.', explain: 'The lucky dog had found a big, juicy bone.' },
+      { q: 'What did the dog see in the water?', choices: ['A fish', 'Another dog with a bone', 'His owner', 'A duck'], answer: 1, skill: 'Detail', hint: 'It seemed to have an even bigger bone.', explain: 'He saw what looked like another dog carrying an even bigger bone.' },
+      { q: 'What was the \u201cother dog\u201d really?', choices: ['A real dog', 'His own reflection', 'A painting', 'A shadow'], answer: 1, skill: 'Inference', hint: 'He was looking into still water.', explain: 'The \u201cother dog\u201d was only the dog\u2019s own reflection in the calm stream.' },
+      { q: 'Why did the dog\u2019s bone fall into the water?', choices: ['It was too heavy', 'He opened his mouth to grab the other bone', 'The bridge broke', 'The wind blew it'], answer: 1, skill: 'Why', hint: 'What happened when he tried to snatch more?', explain: 'When the greedy dog opened his mouth to grab the second bone, his own bone dropped and sank.' },
+      { q: 'What is the moral of this fable?', choices: ['Dogs like bones', 'Being greedy can cost you what you already have', 'Bridges are dangerous', 'Water is deep'], answer: 1, skill: 'Main idea', hint: 'The dog wanted more and lost everything.', explain: 'By grabbing for more, the dog lost the bone he had. The moral: greed can cost you what you already have.' }
+    ]
+  },
+  {
+    id: 'fb-oakreed', level: 3,
+    title: 'The Oak and the Reeds',
+    paras: [
+      'A mighty oak tree grew beside a river, where thin little reeds swayed at the water\u2019s edge. The proud oak liked to laugh at the reeds. \u201cHow weak you are!\u201d he boomed. \u201cThe smallest breeze makes you bow your heads. I am strong and grand. I never bend for anyone or anything.\u201d',
+      'That night, a terrible storm roared through the valley. The wind howled and pushed with all its might. The slender reeds simply bent low and let the wind pass right over them. But the stubborn oak stood stiff and refused to bend \u2014 until, with a great and terrible crack, the mighty tree was torn up by its roots and crashed to the ground. The humble reeds, still swaying gently, understood at last: sometimes it is wiser to bend than to break.'
+    ],
+    questions: [
+      { q: 'What did the proud oak say about the reeds?', choices: ['That they were beautiful', 'That they were weak because they bow to any breeze', 'That they were his friends', 'That they were too tall'], answer: 1, skill: 'Detail', hint: 'He was making fun of them.', explain: 'The oak laughed that the reeds were weak because the smallest breeze made them bow.' },
+      { q: 'What did the reeds do during the storm?', choices: ['They broke apart', 'They bent low and let the wind pass over them', 'They blew away', 'They stood stiff'], answer: 1, skill: 'Detail', hint: 'They were flexible.', explain: 'The reeds bent low and let the powerful wind pass right over them.' },
+      { q: 'Why did the mighty oak fall?', choices: ['It was too old', 'It stood stiff and refused to bend', 'Lightning hit it', 'The reeds pushed it'], answer: 1, skill: 'Why', hint: 'It would not do what the reeds did.', explain: 'The stubborn oak refused to bend, so the storm tore it up by the roots.' },
+      { q: 'Why did the reeds survive the storm?', choices: ['They were lucky', 'Bending let the wind pass over them safely', 'They hid underwater', 'The oak protected them'], answer: 1, skill: 'Inference', hint: 'Their bending had a purpose.', explain: 'By bending, the reeds let the wind pass over them instead of fighting it \u2014 so they were not broken.' },
+      { q: 'What is the moral of this fable?', choices: ['Big trees are best', 'Sometimes it is wiser to bend than to break', 'Storms are scary', 'Reeds are useless'], answer: 1, skill: 'Main idea', hint: 'Compare the oak and the reeds.', explain: 'The stiff oak broke while the bending reeds survived. The moral: sometimes it is wiser to bend than to break.' }
+    ]
+  },
+  {
+    id: 'fb-foxcrow', level: 3,
+    title: 'The Fox and the Crow',
+    paras: [
+      'A crow perched high on a branch with a large piece of cheese held in her beak. A hungry fox spotted her from below and wanted that cheese for himself. He could not climb the tree, so he decided to use his clever tongue instead. \u201cOh, beautiful crow!\u201d he called sweetly. \u201cYour feathers shine like the night sky. Surely a bird so lovely must also have a wonderful voice. Won\u2019t you please sing just one song for me?\u201d',
+      'The crow was so flattered by the fox\u2019s praise that she forgot all about the cheese. She opened her beak wide to sing her very finest \u201cCaw!\u201d \u2014 and the cheese dropped straight down into the waiting fox\u2019s mouth. As he trotted away with his prize, the fox chuckled to himself. The crow had learned a hard lesson: do not trust those who flatter you too much.'
+    ],
+    questions: [
+      { q: 'What did the crow have in her beak?', choices: ['A worm', 'A piece of cheese', 'A twig', 'A berry'], answer: 1, skill: 'Detail', hint: 'The fox wanted it.', explain: 'The crow held a large piece of cheese in her beak.' },
+      { q: 'Why did the fox praise the crow\u2019s feathers and voice?', choices: ['He truly admired her', 'To trick her into opening her beak', 'He wanted to be her friend', 'He was bored'], answer: 1, skill: 'Why', hint: 'What was the fox really after?', explain: 'The fox flattered the crow on purpose, hoping she would open her beak to sing \u2014 and drop the cheese.' },
+      { q: 'What happened when the crow opened her beak to sing?', choices: ['She sang beautifully', 'The cheese dropped down to the fox', 'She flew away', 'The fox ran off'], answer: 1, skill: 'Detail', hint: 'The fox was waiting below.', explain: 'As soon as the crow opened her beak to sing, the cheese fell straight into the fox\u2019s mouth.' },
+      { q: 'Why did the crow lose the cheese?', choices: ['She was clumsy', 'She was so flattered she forgot about the cheese', 'The wind blew it away', 'The fox grabbed it from her'], answer: 1, skill: 'Inference', hint: 'What did the fox\u2019s sweet words do to her?', explain: 'The fox\u2019s flattery made the crow forget the cheese, so she opened her beak and lost it.' },
+      { q: 'What is the moral of this fable?', choices: ['Crows cannot sing', 'Do not trust those who flatter you too much', 'Foxes are fast', 'Cheese is tasty'], answer: 1, skill: 'Main idea', hint: 'The fox\u2019s sweet words were a trick.', explain: 'The crow was fooled by the fox\u2019s flattery. The moral: do not trust those who flatter you too much.' }
+    ]
   }
 ];

@@ -151,5 +151,140 @@ export const PASSAGES = [
       { q: 'Why did the town become the Earmuff Capital of the World?', choices: ['It was the coldest town anywhere', 'Chester built his earmuff factory there', 'Everyone there skated', 'It had the most beavers'], answer: 1, skill: 'Inference', hint: 'Where did Chester make all those earmuffs?', explain: 'Chester built his factory in his hometown, so Farmington made earmuffs for the whole world.' },
       { q: 'What is the big idea of this story?', choices: ['Maine is very cold', 'A kid who solves their own problem can help everyone', 'Wool hats are itchy', 'Factories are loud'], answer: 1, skill: 'Main idea', hint: 'Chester was only fifteen. What did his cold ears turn into?', explain: 'Chester turned his own everyday problem into an invention the whole world uses. You are never too young to invent!' }
     ]
+  },
+  {
+    id: 'pp-lincoln', level: 1,
+    title: 'The Boy Who Loved Books',
+    paras: [
+      'Long ago, a boy named Abraham Lincoln grew up in a small log cabin in the woods. His family was poor, and there was no school close by. But Abe loved to read more than almost anything. He would walk for miles just to borrow one book.',
+      'At night, Abe read by the light of the fire. He read every book he could find, again and again. That poor boy who loved books grew up to become a president of the United States. Abraham Lincoln showed that learning can take you far, no matter where you start.'
+    ],
+    questions: [
+      { q: 'Where did Abe grow up?', choices: ['In a big city', 'In a log cabin in the woods', 'By the sea', 'On a boat'], answer: 1, skill: 'Detail', hint: 'It was small and in the woods.', explain: 'Abraham Lincoln grew up in a small log cabin in the woods.' },
+      { q: 'What did Abe love to do?', choices: ['Play sports', 'Read books', 'Go fishing', 'Build cabins'], answer: 1, skill: 'Detail', hint: 'He would walk miles to do it.', explain: 'Abe loved to read more than almost anything.' },
+      { q: 'Why did Abe walk for miles?', choices: ['To go to school', 'To borrow a book', 'To find food', 'To visit friends'], answer: 1, skill: 'Why', hint: 'It was something he loved.', explain: 'Abe walked for miles just to borrow a book to read.' },
+      { q: 'What did Abe grow up to become?', choices: ['A teacher', 'A president of the United States', 'A farmer', 'A writer'], answer: 1, skill: 'Detail', hint: 'It is a very important job.', explain: 'The poor boy who loved books grew up to become a president of the United States.' },
+      { q: 'What is the big idea of this story?', choices: ['Cabins are small', 'Learning can take you far, no matter where you start', 'Books are heavy', 'Walking is good for you'], answer: 1, skill: 'Main idea', hint: 'Look at the last sentence.', explain: 'Abe started poor but learned his way to greatness. The big idea: learning can take you far, wherever you begin.' }
+    ]
+  },
+  {
+    id: 'pp-parks', level: 1,
+    title: 'Rosa Parks Takes a Seat',
+    paras: [
+      'Rosa Parks lived at a time when the rules were not fair. Black people had to give up their bus seats to white people. One day in 1955, Rosa was tired of the unfair rules. When she was told to give up her seat, she quietly said no.',
+      'Rosa was very brave. Her quiet \u201cno\u201d helped people all over the country stand up for what was right. Many people joined together to change the unfair rules. Today we remember Rosa Parks as a hero who helped make things more fair for everyone.'
+    ],
+    questions: [
+      { q: 'What unfair rule did Rosa face?', choices: ['She could not go to school', 'She had to give up her bus seat', 'She could not read', 'She could not vote for class'], answer: 1, skill: 'Detail', hint: 'It happened on a bus.', explain: 'Black people had to give up their bus seats to white people \u2014 an unfair rule.' },
+      { q: 'What did Rosa say when she was told to move?', choices: ['\u201cYes\u201d', '\u201cNo\u201d', '\u201cMaybe\u201d', 'Nothing at all'], answer: 1, skill: 'Detail', hint: 'It was quiet but powerful.', explain: 'When told to give up her seat, Rosa quietly said no.' },
+      { q: 'Why did Rosa refuse to move?', choices: ['She was too tired to stand', 'She was tired of the unfair rules', 'She did not hear the driver', 'The bus was full'], answer: 1, skill: 'Why', hint: 'It was about fairness.', explain: 'Rosa refused because she was tired of the unfair rules.' },
+      { q: 'Why do we remember Rosa Parks as a hero?', choices: ['She drove a bus', 'Her brave act helped change unfair rules', 'She was very rich', 'She lived a long time'], answer: 1, skill: 'Inference', hint: 'What did her quiet \u201cno\u201d lead to?', explain: 'Rosa\u2019s brave choice helped people across the country work to change unfair rules \u2014 that is why she is a hero.' },
+      { q: 'What is the big idea of this story?', choices: ['Buses are important', 'One brave person can help change what is unfair', 'Rules never change', 'It is best to stay quiet'], answer: 1, skill: 'Main idea', hint: 'Think about what Rosa\u2019s one choice did.', explain: 'Rosa\u2019s single brave act sparked big change. The big idea: one brave person can help change what is unfair.' }
+    ]
+  },
+  {
+    id: 'pp-jackie', level: 1,
+    title: 'Jackie Steps Up to Bat',
+    paras: [
+      'Jackie Robinson was a wonderful baseball player. But long ago, black players were not allowed to play in the big leagues with white players. That rule was not fair at all.',
+      'In 1947, Jackie became the first black player in the major leagues. Some people were unkind and yelled mean things at him. But Jackie kept his head high and played his best. He hit, he ran, and he won games. Jackie Robinson opened the door so that players of every color could play together.'
+    ],
+    questions: [
+      { q: 'What sport did Jackie Robinson play?', choices: ['Basketball', 'Soccer', 'Baseball', 'Football'], answer: 2, skill: 'Detail', hint: 'He stepped up to bat.', explain: 'Jackie Robinson was a wonderful baseball player.' },
+      { q: 'What unfair rule was there long ago?', choices: ['No one could play baseball', 'Black players could not play in the big leagues', 'Games were only at night', 'Players could not run'], answer: 1, skill: 'Detail', hint: 'It kept players apart.', explain: 'Long ago, black players were not allowed to play in the big leagues with white players.' },
+      { q: 'Why was it hard for Jackie at first?', choices: ['He was not good at baseball', 'Some people were unkind and yelled mean things', 'The games were too long', 'He had no team'], answer: 1, skill: 'Inference', hint: 'How did some people treat him?', explain: 'It was hard because some people were unkind and yelled mean things, yet Jackie kept his head high.' },
+      { q: 'What did Jackie do in 1947?', choices: ['Became the first black player in the major leagues', 'Won a gold medal', 'Started his own team', 'Retired from baseball'], answer: 0, skill: 'Detail', hint: 'It was a huge first.', explain: 'In 1947, Jackie became the first black player in the major leagues.' },
+      { q: 'What is the big idea of this story?', choices: ['Baseball is fun', 'Jackie opened the door for players of every color', 'Only fast players win', 'Crowds can be loud'], answer: 1, skill: 'Main idea', hint: 'Look at the last sentence.', explain: 'By breaking the unfair rule, Jackie opened the door so players of every color could play together.' }
+    ]
+  },
+  {
+    id: 'pp-franklin', level: 1,
+    title: 'Ben Franklin\u2019s Kite',
+    paras: [
+      'Ben Franklin was a man full of questions. Long ago, people did not know what lightning really was. Ben had a bold idea: he thought lightning might be a kind of electricity.',
+      'One stormy day, Ben flew a kite up into the clouds with a metal key tied to the string. When electricity moved down the wet string, Ben knew his idea was right. His discovery helped people learn how to stay safe from lightning. Ben Franklin showed that asking questions can lead to big discoveries.'
+    ],
+    questions: [
+      { q: 'What did people not know long ago?', choices: ['How to fly kites', 'What lightning really was', 'How to make keys', 'When storms come'], answer: 1, skill: 'Detail', hint: 'It is what Ben wondered about.', explain: 'Long ago, people did not know what lightning really was.' },
+      { q: 'What was Ben\u2019s bold idea?', choices: ['Lightning might be electricity', 'Kites can fly to the Moon', 'Keys can open clouds', 'Rain is electric'], answer: 0, skill: 'Detail', hint: 'It was about lightning.', explain: 'Ben thought lightning might be a kind of electricity.' },
+      { q: 'What did Ben fly in the storm?', choices: ['A balloon', 'A kite with a metal key', 'A paper bird', 'A flag'], answer: 1, skill: 'Detail', hint: 'A key was tied to the string.', explain: 'Ben flew a kite with a metal key tied to the string up into the storm clouds.' },
+      { q: 'Why was Ben\u2019s discovery helpful?', choices: ['It made kites popular', 'It helped people stay safe from lightning', 'It made keys shiny', 'It stopped the rain'], answer: 1, skill: 'Why', hint: 'What did people learn to do?', explain: 'Ben\u2019s discovery helped people learn how to stay safe from lightning.' },
+      { q: 'What is the big idea of this story?', choices: ['Storms are scary', 'Asking questions can lead to big discoveries', 'Kites are dangerous', 'Keys are magic'], answer: 1, skill: 'Main idea', hint: 'Look at the last sentence.', explain: 'Ben\u2019s curiosity led to a great discovery. The big idea: asking questions can lead to big discoveries.' }
+    ]
+  },
+  {
+    id: 'pp-seuss', level: 1,
+    title: 'The Man Who Made Silly Books',
+    paras: [
+      'Long ago, a man named Theodor Geisel loved to draw funny animals and make up silly words. He wrote books using a pen name: Dr. Seuss. Some people told him that books for children had to be plain and boring. He did not believe them.',
+      'Dr. Seuss wrote books that rhymed and bounced and made kids laugh out loud. He even wrote one famous book using only a small list of simple words. Millions of children learned to love reading because his books were so much fun. Dr. Seuss proved that reading can be a joy.'
+    ],
+    questions: [
+      { q: 'What pen name did Theodor Geisel use?', choices: ['Dr. Seuss', 'Mr. Silly', 'Dr. Draw', 'Mr. Rhyme'], answer: 0, skill: 'Detail', hint: 'It is a famous name on many books.', explain: 'Theodor Geisel wrote his books using the pen name Dr. Seuss.' },
+      { q: 'What did some people say about children\u2019s books?', choices: ['They had to be plain and boring', 'They had to be long', 'They had to have no pictures', 'They had to be about animals'], answer: 0, skill: 'Detail', hint: 'He did not agree with them.', explain: 'Some people said children\u2019s books had to be plain and boring, but Dr. Seuss did not believe them.' },
+      { q: 'Did Dr. Seuss agree with those people?', choices: ['Yes', 'No', 'He was not sure', 'He never heard them'], answer: 1, skill: 'Inference', hint: 'What kind of books did he write instead?', explain: 'He did not agree \u2014 instead he wrote silly, rhyming books that were the opposite of boring.' },
+      { q: 'Why did children love his books?', choices: ['They were very short', 'They rhymed and were funny', 'They had no words', 'They were about school'], answer: 1, skill: 'Why', hint: 'His books bounced and made kids laugh.', explain: 'Children loved his books because they rhymed, bounced, and made them laugh out loud.' },
+      { q: 'What is the big idea of this story?', choices: ['Reading can be a joy', 'Drawing is hard', 'Books should be plain', 'Silly words are wrong'], answer: 0, skill: 'Main idea', hint: 'Look at the last sentence.', explain: 'Dr. Seuss made reading fun for millions of kids. The big idea: reading can be a joy.' }
+    ]
+  },
+  {
+    id: 'pp-edison', level: 2,
+    title: 'Edison\u2019s Bright Idea',
+    paras: [
+      'Thomas Edison wanted to make a lamp that could light up a whole home using electricity. It sounds simple today, but it was incredibly hard back then. Edison and his team tested thousands of different materials, searching for one that would glow brightly without burning up too fast.',
+      'Test after test failed. When someone asked Edison if he felt like a failure, he said no \u2014 he had simply found thousands of ways that did not work, and each one brought him closer to the answer. At last, a thin thread of burnt bamboo glowed steadily for hours. Edison had invented a light bulb people could use at home. His secret was not magic at all. It was refusing to quit.'
+    ],
+    questions: [
+      { q: 'What did Edison want to make?', choices: ['A telephone', 'An electric light for homes', 'A camera', 'A radio'], answer: 1, skill: 'Detail', hint: 'It would light up a home.', explain: 'Edison wanted to make a lamp that could light up a home using electricity.' },
+      { q: 'How many materials did Edison and his team test?', choices: ['Just a few', 'About ten', 'Thousands', 'None'], answer: 2, skill: 'Detail', hint: 'It was a huge number.', explain: 'Edison and his team tested thousands of different materials.' },
+      { q: 'How did Edison feel about all his failed tests?', choices: ['Like a total failure', 'He saw each one as a step closer to the answer', 'Angry at his team', 'Ready to give up'], answer: 1, skill: 'Inference', hint: 'What did he say when asked?', explain: 'Edison did not feel like a failure \u2014 he saw each failed test as one more way that did not work, bringing him closer.' },
+      { q: 'What finally glowed for hours?', choices: ['A thread of burnt bamboo', 'A piece of gold', 'A candle', 'A metal spring'], answer: 0, skill: 'Detail', hint: 'It came from a plant.', explain: 'A thin thread of burnt bamboo finally glowed steadily for hours.' },
+      { q: 'What is the big idea of this story?', choices: ['Bamboo is special', 'Edison\u2019s secret was refusing to quit', 'Light bulbs are simple', 'Tests are boring'], answer: 1, skill: 'Main idea', hint: 'What was his \u201csecret\u201d?', explain: 'After thousands of failures, Edison succeeded because he refused to quit. That persistence was his real secret.' }
+    ]
+  },
+  {
+    id: 'pp-curie', level: 2,
+    title: 'Marie Curie and the Glowing Rocks',
+    paras: [
+      'Marie Curie was a scientist who loved to study rocks and metals. She discovered that certain rocks gave off invisible rays of energy. She gave this strange power a name: radioactivity. At the time, almost no one else in the world understood it.',
+      'Marie worked in a cold, leaky shed, stirring giant pots of crushed rock for years, until she pulled out a tiny amount of a brand-new element that actually glowed in the dark. She won the Nobel Prize, the top award in science, not just once but twice \u2014 the first person ever to do so. Marie Curie proved that a woman could stand at the very top of science.'
+    ],
+    questions: [
+      { q: 'What did Marie Curie love to study?', choices: ['Stars', 'Rocks and metals', 'Animals', 'Plants'], answer: 1, skill: 'Detail', hint: 'She stirred pots of it.', explain: 'Marie Curie loved to study rocks and metals.' },
+      { q: 'What did Marie name the invisible rays?', choices: ['Electricity', 'Radioactivity', 'Gravity', 'Sunlight'], answer: 1, skill: 'Detail', hint: 'It was a brand-new word she made.', explain: 'Marie named the strange power radioactivity.' },
+      { q: 'Where did Marie do her hard work?', choices: ['A bright lab', 'A cold, leaky shed', 'A library', 'A hospital'], answer: 1, skill: 'Detail', hint: 'It was not comfortable at all.', explain: 'Marie worked for years in a cold, leaky shed, stirring pots of crushed rock.' },
+      { q: 'How many Nobel Prizes did Marie Curie win?', choices: ['One', 'Two', 'Three', 'None'], answer: 1, skill: 'Detail', hint: 'She was the first person ever to do it.', explain: 'Marie won the Nobel Prize twice \u2014 the first person ever to do so.' },
+      { q: 'What is the big idea of this story?', choices: ['Rocks can glow', 'A woman could reach the very top of science', 'Sheds are cold', 'Prizes are hard to win'], answer: 1, skill: 'Main idea', hint: 'What did Marie prove to the world?', explain: 'Through her discoveries and two Nobel Prizes, Marie Curie proved a woman could stand at the very top of science.' }
+    ]
+  },
+  {
+    id: 'pp-mandela', level: 2,
+    title: 'Nelson Mandela\u2019s Long Wait',
+    paras: [
+      'In the country of South Africa, there were once cruel and unfair laws that kept people apart because of the color of their skin. Nelson Mandela believed with all his heart that everyone should be treated equally. He spoke out bravely against the unfair laws, and for that, he was put in prison for twenty-seven long years.',
+      'Even locked away for so long, Mandela never gave up hope and never grew bitter. When he was finally set free, he did not want revenge on those who had jailed him. Instead, he worked to bring his divided country back together in peace. Nelson Mandela became the president of South Africa and taught the world that forgiveness can be stronger than anger.'
+    ],
+    questions: [
+      { q: 'What did the unfair laws in South Africa do?', choices: ['Kept people apart by the color of their skin', 'Closed all the schools', 'Banned reading', 'Made everyone move'], answer: 0, skill: 'Detail', hint: 'It was about how people were separated.', explain: 'The cruel laws kept people apart because of the color of their skin.' },
+      { q: 'How long was Mandela kept in prison?', choices: ['Two years', 'Ten years', 'Twenty-seven years', 'Fifty years'], answer: 2, skill: 'Detail', hint: 'It was a very long time.', explain: 'Nelson Mandela was in prison for twenty-seven long years.' },
+      { q: 'What does it show that Mandela did not want revenge?', choices: ['He was afraid', 'He chose forgiveness and peace', 'He forgot what happened', 'He was too tired'], answer: 1, skill: 'Inference', hint: 'What did he work for instead of revenge?', explain: 'Instead of revenge, Mandela worked to bring his country together \u2014 showing he chose forgiveness and peace.' },
+      { q: 'What did Mandela become after prison?', choices: ['A teacher', 'The president of South Africa', 'A judge', 'A doctor'], answer: 1, skill: 'Detail', hint: 'The top job in his country.', explain: 'Nelson Mandela became the president of South Africa.' },
+      { q: 'What is the big idea of this story?', choices: ['Prison is unfair', 'Forgiveness can be stronger than anger', 'South Africa is far away', 'Laws never change'], answer: 1, skill: 'Main idea', hint: 'Look at the last sentence.', explain: 'Mandela chose peace over revenge and united his country. The big idea: forgiveness can be stronger than anger.' }
+    ]
+  },
+  {
+    id: 'pp-nightingale', level: 2,
+    title: 'The Lady with the Lamp',
+    paras: [
+      'Long ago, hospitals were often dirty and dark, and many sick soldiers did not get better inside them. Florence Nightingale was a nurse who believed that clean, bright, careful care could save lives. When a war broke out, she traveled far from home to help wounded soldiers in a filthy army hospital.',
+      'Florence scrubbed the wards, opened the windows for fresh air, and washed the bandages until they were clean. At night, she carried a lamp from bed to bed, checking on every single soldier. Because of her care, far fewer soldiers died. People began to call her \u201cthe Lady with the Lamp.\u201d Florence Nightingale changed the way hospitals work, and nurses everywhere still follow her example today.'
+    ],
+    questions: [
+      { q: 'What was Florence Nightingale\u2019s job?', choices: ['A doctor', 'A nurse', 'A soldier', 'A teacher'], answer: 1, skill: 'Detail', hint: 'She cared for the sick.', explain: 'Florence Nightingale was a nurse.' },
+      { q: 'What did Florence believe could save lives?', choices: ['Clean, careful care', 'Bigger hospitals', 'More soldiers', 'Louder music'], answer: 0, skill: 'Detail', hint: 'It was about keeping things clean and bright.', explain: 'Florence believed clean, bright, careful care could save lives.' },
+      { q: 'What did Florence carry at night?', choices: ['A book', 'A lamp', 'A blanket', 'A flag'], answer: 1, skill: 'Detail', hint: 'It is where her nickname comes from.', explain: 'At night, Florence carried a lamp from bed to bed \u2014 earning her the name \u201cthe Lady with the Lamp.\u201d' },
+      { q: 'Why did far fewer soldiers die after Florence arrived?', choices: ['The war ended', 'Because of her clean, careful care', 'More doctors came', 'The weather warmed up'], answer: 1, skill: 'Why', hint: 'What did she change about the hospital?', explain: 'Florence cleaned the wards, let in fresh air, and washed the bandages \u2014 her careful care saved many lives.' },
+      { q: 'What is the big idea of this story?', choices: ['Lamps are useful', 'Florence changed the way hospitals work', 'Wars are long', 'Nurses stay up late'], answer: 1, skill: 'Main idea', hint: 'What do nurses still do because of her?', explain: 'Florence\u2019s clean, careful methods changed hospitals forever, and nurses everywhere still follow her example.' }
+    ]
   }
 ];
