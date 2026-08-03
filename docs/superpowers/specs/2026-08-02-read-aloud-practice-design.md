@@ -37,10 +37,12 @@ Measured cost of the feature, first run:
 Two mechanics confirmed by inspecting the worker, both differing from earlier assumptions:
 
 - **The model must be a `.tar.gz`**, not the `.zip` alphacephei distributes — the loader
-  writes `downloaded.tar.gz` and extracts it. It is repacked once and committed.
+  writes `downloaded.tar.gz` and extracts it. It will be repacked once during
+  implementation (plan Task 1).
 - **It must be served from our own origin.** Fetching from `alphacephei.com` at runtime
-  would reintroduce exactly the third-party request the font change removed. The archive is
-  committed to `models/` and served by Netlify alongside everything else.
+  would reintroduce exactly the third-party request the font change removed. The archive
+  will be committed to `models/` and served by Netlify alongside everything else. **Neither
+  `models/` nor the archive exists in the repo yet** — both are created by plan Task 1.
 - **Caching is IndexedDB**, via Emscripten's virtual FS with `downloaded.ok` /
   `extracted.ok` markers — handled by the library, not by us, and *not* Cache Storage.
   Capability probing in Tier 2 therefore targets IndexedDB.
@@ -376,7 +378,16 @@ user-agent sniffed. If false: practice unavailable, dashboard toggle disabled wi
 |---|---|---|
 | `persistent` | IndexedDB present, test open+write succeeds, `navigator.storage.estimate()` shows headroom for ~75 MB | Normal. Download once. |
 | `ephemeral` | IndexedDB missing or test write fails (Safari private browsing is the concrete case) | Practice still offered, but the dashboard toggle carries a plain warning: this browser can't save the voice model, so it re-downloads about 39 MB each session. Parent decides. |
-| `insufficient` | Quota estimate below what the model needs | Practice unavailable, with a "not enough storage on this device" reason — distinct from "not supported", because it is fixable. |
+| `insufficient` | `navigator.storage.estimate()` returned **usable numbers** and they are below what the model needs | Practice unavailable, with a "not enough storage on this device" reason — distinct from "not supported", because it is fixable. |
+
+**Unknown quota is not `insufficient`.** `navigator.storage.estimate()` may be absent,
+throw, or return partial data with `quota`/`usage` undefined. In every one of those cases
+the result is **`persistent`** — proceed optimistically and let the download fail loudly if
+storage really is short. Treating unknown as `insufficient` would disable the feature on
+devices that are perfectly capable, which is the opposite of the desired failure direction:
+a failed download costs a retry, a false `insufficient` costs the whole feature with a
+misleading explanation. A download that does fail surfaces through the existing
+`listenState: 'error'` path with its retry and "skip practice for this story" options.
 
 A capability test-write is required rather than a bare `'caches' in window` check: Safari
 exposes the API in private browsing and fails on write.

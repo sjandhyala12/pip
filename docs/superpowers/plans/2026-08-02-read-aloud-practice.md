@@ -779,11 +779,16 @@ export async function modelCacheState() {
   });
   if (!canWrite) return 'ephemeral';
 
+  // Unknown quota must NOT be treated as insufficient. estimate() can be absent,
+  // throw, or return partial data; reporting 'insufficient' then would disable the
+  // feature on a perfectly capable device with a misleading reason. Proceed
+  // optimistically instead and let a real download failure surface via listenState.
   if (navigator.storage && navigator.storage.estimate) {
     try {
-      const { quota = 0, usage = 0 } = await navigator.storage.estimate();
-      if (quota - usage < MODEL_BYTES_NEEDED) return 'insufficient';
-    } catch (e) { /* estimate is advisory; fall through */ }
+      const est = await navigator.storage.estimate();
+      const known = typeof est.quota === 'number' && typeof est.usage === 'number';
+      if (known && est.quota - est.usage < MODEL_BYTES_NEEDED) return 'insufficient';
+    } catch (e) { /* advisory only — fall through to 'persistent' */ }
   }
   return 'persistent';
 }

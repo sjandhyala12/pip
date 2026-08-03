@@ -97,13 +97,14 @@ rather than a runtime vocabulary lookup.
 
 | | |
 |---|---|
-| Model download (zipped) | **39.2 MiB** |
+| Model download (see addendum: `.tar.gz`) | **39.3 MiB** |
 | Model unpacked on disk | **68 MB** |
 | `vosk-browser` library | **5.8 MB** |
 | **First-run total** | **~45 MB download, ~74 MB stored** |
 
 The spec said "~40MB model." The download figure is close, but **68 MB of unpacked storage**
-is the number that matters for Cache Storage quota, and it was not accounted for.
+is the number that matters for storage quota, and it was not accounted for. (Which storage
+API holds it was established later — see the addendum below.)
 
 Worth verifying during implementation: Safari evicts script-writable storage after
 extended non-use, which would force a 39 MB re-download. The app's existing progress data
@@ -138,6 +139,46 @@ Mitigation is cheap and worth taking: **vendor `dist/vosk.js` into the repo** ra
 depending on a CDN. It is a single self-contained file, the license permits it, the project
 already has no package manager, and it removes both a runtime third-party request and the
 risk of the package disappearing.
+
+---
+
+---
+
+## Addendum — findings 8–10 (added during implementation planning, same day)
+
+Three further facts established by inspecting the decoded worker while writing the plan.
+They supersede assumptions made in findings 1–7 above and are reflected in the design doc.
+
+### 8. The model must be `.tar.gz`, not `.zip`
+
+The worker writes `downloaded.tar.gz` and extracts it:
+
+```
+const archivePath = localPath + "/downloaded.tar.gz";
+```
+
+alphacephei distributes a `.zip`, so it must be repacked once. Repacked size is **39.3 MiB**,
+effectively identical to the zip.
+
+### 9. Caching is IndexedDB, not Cache Storage
+
+The worker caches through Emscripten's virtual FS, backed by IndexedDB, using `downloaded.ok`
+and `extracted.ok` marker files:
+
+```
+if (isFile(extractedOk)) { log(`${localPath} was found cached`, 2); return }
+```
+
+The library handles this itself — we neither populate nor manage a cache. Capability
+probing must therefore target IndexedDB, and must attempt a real write: Safari exposes
+IndexedDB in private browsing and then fails on write.
+
+### 10. The model must be served from our own origin
+
+Not a library finding but a direct consequence: fetching the archive from `alphacephei.com`
+at runtime would send every user's IP to a third party, reintroducing exactly the leak that
+self-hosting the fonts removed (commit `e987d02`). The archive is served from `models/` on
+our own origin. This is future work — see Task 1 of the implementation plan.
 
 ---
 
