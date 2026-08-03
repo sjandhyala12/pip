@@ -29,14 +29,25 @@ Measured cost of the feature, first run:
 
 | | |
 |---|---|
-| Model download (zipped) | 39.2 MiB |
-| Model unpacked on disk | 68 MB |
+| Model download (`.tar.gz`) | 39.3 MiB |
+| Model unpacked in browser FS | 68 MB |
 | Vendored `vosk.js` | 5.8 MB |
 | **Total** | **~45 MB download, ~74 MB stored** |
 
-The 68 MB unpacked figure is what matters for Cache Storage quota. Safari's eviction of
-script-writable storage after extended non-use would force a 39 MB re-download, so the UI
-needs a "downloading again" state rather than assuming the model is present once fetched.
+Two mechanics confirmed by inspecting the worker, both differing from earlier assumptions:
+
+- **The model must be a `.tar.gz`**, not the `.zip` alphacephei distributes — the loader
+  writes `downloaded.tar.gz` and extracts it. It is repacked once and committed.
+- **It must be served from our own origin.** Fetching from `alphacephei.com` at runtime
+  would reintroduce exactly the third-party request the font change removed. The archive is
+  committed to `models/` and served by Netlify alongside everything else.
+- **Caching is IndexedDB**, via Emscripten's virtual FS with `downloaded.ok` /
+  `extracted.ok` markers — handled by the library, not by us, and *not* Cache Storage.
+  Capability probing in Tier 2 therefore targets IndexedDB.
+
+The 68 MB extracted figure is what matters for quota. Safari's eviction of script-writable
+storage after extended non-use would force a 39 MB re-download, so the UI needs a
+"downloading again" state rather than assuming the model is present once fetched.
 
 Chosen over the two obvious alternatives for specific reasons:
 
@@ -103,7 +114,7 @@ per-line grammar-constrained recognition. No other file references Vosk.
 ```js
 export const listenSupported            // can we listen at all? (see capability tiers)
 export function modelCacheState()       // → 'persistent' | 'ephemeral' | 'insufficient'
-export function loadModel(onProgress)   // → Promise, caches in Cache Storage
+export function loadModel(onProgress)   // → Promise; vosk caches into IndexedDB itself
 export function listenForLine(words, { onPartial, onResult })
 export function stopListening()
 ```
@@ -363,8 +374,8 @@ user-agent sniffed. If false: practice unavailable, dashboard toggle disabled wi
 
 | Result | Condition | Behavior |
 |---|---|---|
-| `persistent` | Cache Storage present, test write succeeds, `navigator.storage.estimate()` shows headroom for ~75 MB | Normal. Download once. |
-| `ephemeral` | Cache Storage missing or test write fails (Safari private browsing is the concrete case) | Practice still offered, but the dashboard toggle carries a plain warning: this browser can't save the voice model, so it re-downloads about 39 MB each session. Parent decides. |
+| `persistent` | IndexedDB present, test open+write succeeds, `navigator.storage.estimate()` shows headroom for ~75 MB | Normal. Download once. |
+| `ephemeral` | IndexedDB missing or test write fails (Safari private browsing is the concrete case) | Practice still offered, but the dashboard toggle carries a plain warning: this browser can't save the voice model, so it re-downloads about 39 MB each session. Parent decides. |
 | `insufficient` | Quota estimate below what the model needs | Practice unavailable, with a "not enough storage on this device" reason — distinct from "not supported", because it is fixable. |
 
 A capability test-write is required rather than a bare `'caches' in window` check: Safari
@@ -376,7 +387,7 @@ exposes the API in private browsing and fails on write.
 |---|---|
 | Unsupported browser | Practice unavailable; normal read screen. Dashboard toggle disabled with a reason — mirrors how `speechSupported` disables the read-aloud toggle at `app.js:594`. Detection per Tier 1 above, never by user-agent string |
 | Insufficient storage | Practice unavailable, with a distinct "not enough storage" reason (Tier 2 `insufficient`) — fixable, unlike unsupported |
-| First run | "Getting ready to listen…" + download progress. Model cached in Cache Storage; instant thereafter |
+| First run | "Getting ready to listen…" + download progress. Vosk caches the model in IndexedDB; instant thereafter |
 | Re-download (`ephemeral`, or evicted) | "Getting the voice model again…" — same progress UI, different copy, so a parent seeing repeated downloads understands why rather than assuming a bug |
 | Mic prompt | Fires only on an explicit "Start reading" tap — never automatically on screen load |
 | Permission denied | Clear message + "Read it on your own instead" → falls back to the normal read screen for that story |
