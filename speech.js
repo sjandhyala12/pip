@@ -31,7 +31,10 @@ export function stopSpeech() {
 
 // Speak text at a kid-friendly pace. Calls onStart/onEnd for UI state.
 export function speak(text, { onStart, onEnd } = {}) {
-  if (!speechSupported || !text) return;
+  // Always settle the callback, even when we cannot speak. Reading Practice
+  // continues its loop from onEnd (resume listening, advance a stuck line), so a
+  // silent return here would freeze a child mid-passage with no way forward.
+  if (!speechSupported || !text) { if (onEnd) onEnd(); return; }
   window.speechSynthesis.cancel();
   const u = new SpeechSynthesisUtterance(text);
   u.rate = 0.9;      // a touch slower for young readers

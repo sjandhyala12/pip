@@ -40,22 +40,45 @@ netlify deploy --prod --dir .
 - **`app.js`** — the entire app: screen renderer, state machine, scoring, feedback, pet growth, `localStorage` persistence. This is the behavioral source of truth for any React rebuild.
 - **`styles.css`** — all styling including design tokens and responsive breakpoints (560 / 760 / 900px).
 - **`passages/index.js`** — category registry; the single file that wires world configs to passage arrays. Add a new world here.
-- **`passages/*.js`** — one file per world, each exporting `PASSAGES` (10 stories each).
+- **`passages/*.js`** — one file per world, each exporting `PASSAGES` (15–19 stories each; 99 total).
 - **`pets/index.js`** — assembles the per-animal art and exposes `petSVG(species, stage, fill)`.
 - **`pets/<animal>.js`** — one file per animal, exporting `{ egg, hatch, kid, big, star }` (SVG per growth stage). Edit pet art here; changes to one animal never touch others.
 - **`assets/<animal>/`** — standalone `.svg` exports (not used at runtime; edit `pets/` instead).
+- **`speech.js`** — optional Web Speech API passage/question read-aloud.
+- **`listen.js`** — optional local Vosk microphone listener for read-to-me practice.
+- **`meter.js`** — canvas bar-graph microphone level display; pure drawing, fed 0..1 levels by `listen.js`'s `onLevel`.
+- **`miscue.js`** — pure segmentation, grammar vocabulary, normalization, and miscue classification. Function words and possessive suffixes are deliberately never scored; `MIN_CONFIDENCE` is tuned against real recordings (see `tests/recordings.test.js`).
+- **`vendor/vosk.js`**, **`models/`**, **`data/model-vocab.txt`** — vendored Vosk runtime, local model archive, and extracted vocabulary artifact.
+- **`tests/`** — `node:test` coverage for segmentation, vocabulary, unscoreables, and miscues.
 
 ### State shape (`app.js`)
 ```js
 // persisted to localStorage under 'reading-patch-v1'
 { berries: { [worldId]: number },
+  earned: { [worldId]: number },
   records: { [storyId]: { stars: number } },
-  stats: { [worldId]: { times: number[], skills: { [skill]: { total, firstCorrect } } } } }
+  owned: { [worldId]: string[] },
+  equipped: { [worldId]: { hat, face, neck, buddy, bg } },
+  stats: { [worldId]: { times: number[], skills: { [skill]: { total, firstCorrect } } } },
+  readAloud: boolean,
+  practice: boolean,
+  practiceStuck: 'help' | 'grownup',
+  practiceWords: { [normalizedWord]: { missed, invented, last } } }
 
 // transient (in-memory only)
 screen, catId, pid, qIndex, attempt, wrong[], results[],
 runEarned, phase, lastCorrect, quizStarted, startBerries, textSize,
-qStart, qAnswered, gateOpen, gate
+qStart, qAnswered, gateOpen, gate, lines[], lineIndex, lineAttempt,
+lineWords[], listenState, modelPct, cacheState, practiceGate
+```
+
+## Testing
+
+Run the pure logic tests with:
+
+```bash
+node --test
+node --check app.js
 ```
 
 ### Scoring rules
@@ -99,4 +122,4 @@ See `DEVELOPER_HANDOFF.md` for the full token table. Key values:
 
 ## Parent Dashboard
 
-Accessible from home footer, behind a multiplication gate (session-only flag `gateOpen`). Shows timing stats (avg/median seconds per question by world) and comprehension by skill (first-try rate). Reset clears all `localStorage`.
+Accessible from home footer, behind a multiplication gate (session-only flag `gateOpen`). Shows timing stats (avg/median seconds per question by world), comprehension by skill (first-try rate), and reading-practice controls/word counts. Reset clears all `localStorage`.

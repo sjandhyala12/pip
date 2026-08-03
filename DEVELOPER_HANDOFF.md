@@ -88,12 +88,12 @@ There is no URL routing in the prototype; you may add MUI/React Router routes if
   world cards. Grid: 3 columns ≥900px, 2 columns 560–900px, 1 column <560px.
 - **World card (button):** centered. Pet illustration (140px) on top, world name (Baloo
   21px), pet line ("Waffles the puppy · Baby Waffles"), a slim accent progress bar, then a
-  row: berry count · "N/10 stories" · "Visit →". Hover lifts 3px and borders in the world accent.
+  row: berry count · story-completion count · "Visit →". Hover lifts 3px and borders in the world accent.
 - **Footer:** "Parent corner · Progress is saved on this device · Start over" (Start over
   clears all progress after a confirm).
 
 ### 2. Category ("world") page
-- **Purpose:** show the world's pet/progress and its 10 stories.
+- **Purpose:** show the world's pet/progress and its stories.
 - **Layout:** header (← All worlds, world name chip). Two columns ≥760px
   (`320px | 1fr`): left = pet panel, right = story grid. Stacks to one column <760px.
 - **Pet panel:** large pet (200px), stage name (e.g. "Little Pip"), caption, accent
@@ -145,10 +145,10 @@ port the filter as component state and the badge as a small presentational compo
 ### Parent dashboard & timing capture
 - **Access:** home footer → “Parent dashboard,” behind a grown-ups gate (a random `a × b` the
   parent answers; pass is session-only via `gateOpen`).
-- **Contents:** summary cards (stories completed `/60`, stars, questions answered); a **“Time to
+- **Contents:** summary cards (stories completed, stars, questions answered); a **“Time to
   answer, by category”** table (World / Stories / Stars / Avg / Median) with an overall
   average+median line; a **“Comprehension by skill”** panel (first-try correct rate per skill);
-  and reset progress.
+  reading-practice controls and accumulated words to practice; and reset progress.
 - **Timing:** each question records seconds from when it appears to the child's **first** answer
   (`qStart` set on show, measured in `pick()` on first tap, guarded by `qAnswered`). Durations
   append to `stats[catId].times`; the dashboard computes mean and median. Skill accuracy is
@@ -198,7 +198,11 @@ progress = {
   stats:    { [worldId]: {                      // parent-dashboard analytics
     times: number[],                            // seconds-to-answer per question
     skills: { [skill]: { total, firstCorrect } }
-  } }
+  } },
+  readAloud: boolean,
+  practice: boolean,                            // optional microphone reading practice
+  practiceStuck: 'help' | 'skip',                // what to do after repeated line trouble
+  practiceWords: { [normalizedWord]: number }    // dashboard "words to practice"
 }
 ```
 - **Berry Shop** (`shop` screen, `accessories.js`): per-world cosmetics grouped into Hats /
@@ -217,6 +221,19 @@ progress = {
   results[], runEarned, phase, lastCorrect, startBerries` (startBerries lets `done` detect a
   stage-up: `stageIdx(now) > stageIdx(startBerries)`).
 - `results[]` holds `'first' | 'retry' | 'miss'` per question, driving stars and recap badges.
+
+### Optional read-to-me practice
+The static implementation includes an optional local microphone practice flow. `listen.js`
+loads `vendor/vosk.js` and `models/vosk-model-small-en-us-0.15.tar.gz`, builds a per-line
+word-loop grammar, and listens locally in the browser. `miscue.js` segments passages into
+short lines, normalizes words, handles unscoreable out-of-vocabulary tokens, and classifies
+omissions, substitutions, and likely inventions. When practice is enabled from the parent
+dashboard, the read screen walks the child through one line at a time before the quiz. Missed
+words are accumulated in `practiceWords`.
+
+If porting to React, keep the listener lifecycle explicit: load/cache the model once, start
+recording only for the current line, stop listening on screen changes, and never upload
+microphone audio.
 
 Helper functions worth porting from `app.js`:
 `stageIdx(berries)`, `stageLabel(idx, petName)`, `caption(idx, petName)`, and the answer/
@@ -242,7 +259,7 @@ type Question = {
 };
 ```
 These `.js` files are plain ES modules with no dependencies — import them directly into the
-React app (or convert to JSON/TS). 60 passages × 5 questions already written.
+React app (or convert to JSON/TS). 99 passages × 5 questions already written.
 
 ---
 
@@ -270,4 +287,11 @@ component — the SVG paths copy over directly. The float is a simple CSS keyfra
   render() cancels speech on every screen change. Gated by a `readAloud` setting (parent
   dashboard toggle); buttons hidden when unsupported. Port with `window.speechSynthesis` or a
   React TTS hook.
+- `listen.js` — optional local Vosk microphone listener. `listenSupported`, `loadModel()`,
+  `listenForLine()`, `stopListening()`, and `modelCacheState()` drive the read-to-me practice
+  flow. Recognition uses a word-loop grammar selected after the 2026-08-02 grammar probe.
+- `miscue.js` — pure helpers for segmenting passages, building grammar words, normalization,
+  unscoreable vocabulary handling, and miscue classification.
+- `vendor/vosk.js`, `models/`, `data/model-vocab.txt`, `tools/extract-vocab.js`, `tests/` —
+  local recognition runtime/model artifacts, vocabulary tooling, and the Node test suite.
 - `passages/index.js` + `passages/*.js` + `passages.js` — all content and per-world config.

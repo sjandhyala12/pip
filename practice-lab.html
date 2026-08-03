@@ -1,0 +1,326 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Practice Lab — confidence tuning &amp; QA</title>
+<link rel="stylesheet" href="styles.css">
+<style>
+  .lab { max-width: 860px; margin: 0 auto; padding: 24px 20px 80px; }
+  .lab h1 { font-family:'Baloo 2',cursive; font-size:28px; margin:0 0 4px; }
+  .lab h2 { font-family:'Baloo 2',cursive; font-size:20px; margin:28px 0 10px; }
+  .sub { color:var(--muted); font-weight:600; margin:0 0 18px; }
+  .card { background:#fff; border:2px solid var(--border); border-radius:18px; padding:16px 18px; margin-bottom:12px; }
+  .card.done { border-color:#3E9B6C; }
+  .card.active { border-color:var(--primary); box-shadow:0 4px 0 rgba(107,121,232,.25); }
+  .tno { font-size:12px; font-weight:800; color:var(--faint); letter-spacing:.06em; text-transform:uppercase; }
+  .line { font-size:26px; font-weight:700; line-height:1.6; margin:8px 0; }
+  .instr { background:#FFF4DC; border-left:4px solid #E8A23D; padding:9px 12px; border-radius:8px;
+           font-weight:700; margin:8px 0; }
+  .instr.plain { background:#E7F5EE; border-left-color:#3E9B6C; }
+  .hl { background:#FFD9D2; border-radius:5px; padding:0 4px; }
+  .row { display:flex; gap:10px; align-items:center; flex-wrap:wrap; margin-top:10px; }
+  button.lab-btn { font-family:'Baloo 2',cursive; font-weight:800; font-size:15px; cursor:pointer;
+      border:2px solid var(--ink); border-radius:12px; padding:9px 16px; background:var(--primary);
+      color:#fff; box-shadow:0 3px 0 var(--ink); }
+  button.lab-btn.sec { background:#fff; color:#5563D6; }
+  button.lab-btn.rec { background:#E1584E; }
+  button.lab-btn:disabled { background:#EFE7D5; color:#B8AF98; border-color:#D9CFB8; box-shadow:0 3px 0 #D9CFB8; cursor:not-allowed; }
+  .res { font-family:ui-monospace,Menlo,monospace; font-size:12.5px; background:#F7F3EA;
+         border-radius:10px; padding:10px; margin-top:10px; white-space:pre-wrap; }
+  .ok { color:#2F7A55; font-weight:800; }
+  .bad { color:#C04B3C; font-weight:800; }
+  .status { font-weight:800; padding:10px 14px; border-radius:12px; background:#F3EBDA; margin-bottom:14px; }
+  textarea { width:100%; height:200px; font-family:ui-monospace,Menlo,monospace; font-size:11.5px;
+             border:2px solid var(--border); border-radius:12px; padding:10px; }
+  label.chk { display:flex; gap:9px; align-items:flex-start; padding:6px 0; font-weight:600; font-size:14.5px; }
+  label.chk input { margin-top:3px; flex:none; width:17px; height:17px; }
+  .mic-meter { max-width:420px; margin:0 0 14px; }
+  .mic-meter.collapsed .mic-canvas,
+  .mic-meter.collapsed .mic-ico,
+  .mic-meter.collapsed #mic-peak { display:none; }
+</style>
+</head>
+<body>
+<div class="lab">
+  <h1>Practice Lab</h1>
+  <p class="sub">Drives the real <code>listen.js</code> and <code>miscue.js</code>. Records raw
+     recognizer output so the confidence threshold can be tuned from evidence.</p>
+
+  <div class="status" id="status">Checking capabilities…</div>
+  <div class="mic-meter" id="mic-meter">
+    <span class="mic-ico">&#127908;</span>
+    <canvas id="mic-canvas" class="mic-canvas" width="300" height="30"></canvas>
+    <span id="mic-peak" style="font-size:11.5px;font-weight:800;color:var(--faint);min-width:74px"></span>
+    <button class="mic-toggle" id="mic-hide">hide</button>
+  </div>
+  <div class="row">
+    <button class="lab-btn" id="load">1 · Load the voice model</button>
+    <button class="lab-btn sec" id="skipto">Jump to checklist</button>
+  </div>
+
+  <h2>Part A — Read-aloud trials</h2>
+  <p class="sub">Do these <strong>with your child</strong>. Green trials = read normally.
+     Amber = do the mistake on purpose. Press <em>Record</em>, read, then press <em>Stop</em>.
+     Redo any trial as often as you like — the last take wins. Stop any time; partial results are still useful.</p>
+  <div id="trials"></div>
+
+  <h2>Part B — Checklist</h2>
+  <p class="sub">Tick what you verified. Anything left unticked is reported as "not checked", not as a failure.</p>
+  <div class="card" id="checklist"></div>
+
+  <h2>Part C — Send this back</h2>
+  <p class="sub">Press Copy and paste the whole block into the chat.</p>
+  <div class="row">
+    <button class="lab-btn" id="copy">Copy results</button>
+    <button class="lab-btn sec" id="clearall">Clear all trials</button>
+    <span id="copied" style="font-weight:800;color:#2F7A55"></span>
+  </div>
+  <textarea id="out" readonly></textarea>
+</div>
+
+<script type="module">
+import { listenSupported, modelCacheState, loadModel, listenForLine, stopListening, diag } from './listen.js';
+import { speechSupported } from './speech.js';
+import { classify, grammarWords, MIN_CONFIDENCE } from './miscue.js';
+import { createMeter, QUIET_LEVEL } from './meter.js';
+
+/* Trials. `expect` is ground truth, used offline to sweep the threshold:
+   'clean'  -> must produce NO miscues (these set the false-positive floor)
+   'miss:W' -> should flag W
+   'silent' -> should report silence, not miscues                         */
+const TRIALS = [
+  { id:'clean-1', line:"Beavers are nature's builders.",
+    say:'Read it normally.', expect:'clean' },
+  { id:'clean-2', line:'That is more than half the day!',
+    say:'Read it normally.', expect:'clean' },
+  { id:'clean-3', line:"A camel's hump is full of fat, not water.",
+    say:'Read it normally.', expect:'clean' },
+  { id:'clean-4', line:'Millions of orange-and-black monarch butterflies begin an enormous journey south.',
+    say:'Read it normally.', expect:'clean' },
+  { id:'clean-fast', line:'So cats rested to save that energy up.',
+    say:'Read it normally, but a bit FAST.', expect:'clean' },
+  { id:'clean-quiet', line:'and hunting takes a lot of energy.',
+    say:'Read it in a QUIET voice.', expect:'clean' },
+  { id:'clean-slow', line:'ready to jump up and play.',
+    say:'Read it SLOWLY, with a pause in the middle.', expect:'clean' },
+  { id:'omit-1', line:"A camel's hump is full of fat, not water.", mark:'full',
+    say:'Skip the word "full" — read the rest normally.', expect:'miss:full' },
+  { id:'omit-2', line:'That is more than half the day!', mark:'half',
+    say:'Skip the word "half".', expect:'miss:half' },
+  { id:'sub-1', line:'So cats rested to save that energy up.', mark:'cats',
+    say:'Say "dogs" where it says "cats".', expect:'miss:cats' },
+  { id:'invent-1', line:'That is more than half the day!', mark:'half',
+    say:'Say a made-up word like "florp" where it says "half".', expect:'miss:half' },
+  { id:'selfcorr-1', line:'So cats rested to save that energy up.', mark:'cats',
+    say:'Say "dogs", then straight away say "cats" and carry on. (Fixing your own mistake must NOT count as wrong.)',
+    expect:'clean' },
+  { id:'silence-1', line:'and hunting takes a lot of energy.',
+    say:'Say NOTHING. Just wait about five seconds, then press Stop.', expect:'silent' }
+];
+
+const CHECKS = [
+  'Practice off: the app behaves exactly as before (no model download, no mic prompt).',
+  'Mic permission denied shows a clear message and "Read it on your own instead" works.',
+  'First run showed download progress; a reload started fast (cached).',
+  'A correct read advances to the next line.',
+  'A skipped word was tinted amber and spoken aloud.',
+  'Three failures revealed the stuck button.',
+  'Stuck = "Help me and move on": the app read the line and moved on.',
+  'Stuck = "A grown-up unlocks it": the gate appeared INLINE on the reading screen (not the dashboard).',
+  'Grown-up bypass check: opened the parent dashboard first, then got stuck in a story — the gate STILL appeared.',
+  '"Keep trying instead" resumed listening (the stuck button did not instantly reappear).',
+  'Story "my-backwards" passed the YTRAP AZZIP line without blocking.',
+  'Story "tamales" passed Abuela and Despacio without blocking.',
+  'A line with a possessive (e.g. "Beavers are nature’s builders") read correctly was accepted.',
+  'Finishing the last line went to the quiz, which scored normally.',
+  'Reset cleared practice words but kept the practice settings.',
+  'The words-to-practice panel listed missed words, and a word read correctly later dropped off.'
+];
+
+const $ = s => document.querySelector(s);
+let peak = 0;
+const labMeter = createMeter($('#mic-canvas'));
+function paintMeter(level) {
+  labMeter.push(level);
+  $('#mic-meter').classList.toggle('quiet', level < QUIET_LEVEL);
+  if (level > peak) peak = level;
+  $('#mic-peak').textContent = 'peak ' + Math.round(peak * 100) + '%';
+}
+const results = {};
+let modelReady = false, recording = null;
+
+/* ---- capability probe (covers several checklist items automatically) ---- */
+const caps = { listenSupported, speechSupported, isSecureContext: window.isSecureContext,
+               userAgent: navigator.userAgent, cacheState: null, MIN_CONFIDENCE };
+(async () => {
+  try { caps.cacheState = listenSupported ? await modelCacheState() : 'n/a'; }
+  catch (e) { caps.cacheState = 'probe-threw: ' + e.message; }
+  $('#status').innerHTML = listenSupported && speechSupported
+    ? `Ready. listen=<span class="ok">yes</span> · speech=<span class="ok">yes</span> · storage=<strong>${caps.cacheState}</strong> · current threshold=<strong>${MIN_CONFIDENCE}</strong>`
+    : `<span class="bad">Practice unavailable here.</span> listen=${listenSupported} speech=${speechSupported} — try Chrome or Safari over http://localhost.`;
+  dump();
+})();
+
+/* ---- trials ---- */
+function markup(t) {
+  if (!t.mark) return t.line;
+  return t.line.replace(new RegExp(`\\b${t.mark}\\b`), `<span class="hl">${t.mark}</span>`);
+}
+
+$('#trials').innerHTML = TRIALS.map((t, i) => `
+  <div class="card" id="c-${t.id}">
+    <div class="tno">Trial ${i + 1} of ${TRIALS.length} · ${t.id}</div>
+    <div class="line">${markup(t)}</div>
+    <div class="instr ${t.expect === 'clean' ? 'plain' : ''}">${t.say}</div>
+    <div class="row">
+      <button class="lab-btn rec" data-rec="${t.id}" disabled>● Record</button>
+      <button class="lab-btn sec" data-stop="${t.id}" disabled>■ Stop</button>
+      <button class="lab-btn sec" data-clr="${t.id}">Clear &amp; redo</button>
+      <span id="s-${t.id}" style="font-weight:800;color:var(--muted)"></span>
+    </div>
+    <div class="res" id="r-${t.id}" hidden></div>
+  </div>`).join('');
+
+$('#load').onclick = async () => {
+  $('#load').disabled = true;
+  $('#status').textContent = 'Downloading the voice model (~39 MB, first time only)…';
+  try {
+    await loadModel(() => {});
+    modelReady = true;
+    document.querySelectorAll('[data-rec]').forEach(b => b.disabled = false);
+    $('#status').innerHTML = `Model loaded. Start with Trial 1. Threshold under test = <strong>${MIN_CONFIDENCE}</strong>`;
+  } catch (e) {
+    $('#status').innerHTML = `<span class="bad">Model failed to load:</span> ${e.message}`;
+    $('#load').disabled = false;
+  }
+};
+
+/* Reset one trial back to its untouched state so it can be redone cleanly. */
+function clearTrial(id) {
+  stopListening();
+  recording = null;
+  delete results[id];
+  const card = $('#c-' + id);
+  card.classList.remove('done', 'active');
+  $('#s-' + id).textContent = '';
+  const box = $('#r-' + id);
+  box.hidden = true; box.textContent = '';
+  const rb = document.querySelector(`[data-rec="${id}"]`);
+  const sb = document.querySelector(`[data-stop="${id}"]`);
+  if (rb) rb.disabled = !modelReady;
+  if (sb) sb.disabled = true;
+  dump();
+}
+
+document.addEventListener('click', async e => {
+  const rec = e.target.dataset && e.target.dataset.rec;
+  const stop = e.target.dataset && e.target.dataset.stop;
+  const clr = e.target.dataset && e.target.dataset.clr;
+
+  if (clr) { clearTrial(clr); return; }
+
+  if (rec) {
+    if (!modelReady) return;
+    const t = TRIALS.find(x => x.id === rec);
+    recording = { id: rec, heard: [] };
+    document.querySelectorAll('.card').forEach(c => c.classList.remove('active'));
+    $('#c-' + rec).classList.add('active');
+    $('#s-' + rec).textContent = 'listening…';
+    e.target.disabled = true;
+    document.querySelector(`[data-stop="${rec}"]`).disabled = false;
+    try {
+      peak = 0;
+      await listenForLine(grammarWords(t.line), {
+        onLevel: paintMeter,
+        onResult: h => { if (recording && recording.id === rec) recording.heard.push(...h); }
+      });
+    } catch (err) {
+      $('#s-' + rec).innerHTML = `<span class="bad">mic error: ${err.message}</span>`;
+      e.target.disabled = false;
+    }
+  }
+
+  if (stop) {
+    const before = recording && recording.id === stop ? recording.heard.length : 0;
+    $('#s-' + stop).textContent = 'finishing…';
+    stopListening();
+    // Wait for the final result to actually land rather than guessing a delay:
+    // stopListening() triggers an async worker round trip, and a fixed sleep
+    // would report a false "silence" on a slow device.
+    const deadline = Date.now() + 4000;
+    while (Date.now() < deadline) {
+      await new Promise(r => setTimeout(r, 50));
+      if (recording && recording.id === stop && recording.heard.length > before) break;
+    }
+    const t = TRIALS.find(x => x.id === stop);
+    const heard = recording && recording.id === stop ? recording.heard : [];
+    recording = null;
+    results[stop] = { id: stop, line: t.line, expect: t.expect, instruction: t.say, heard };
+
+    const res = classify(t.line.split(/\s+/), heard);
+    const got = res.silent ? 'silence'
+      : (res.miscues.length ? res.miscues.map(m => `${m.kind}:${m.word}`).join(', ') : 'no miscues');
+    const pass = t.expect === 'clean' ? (!res.silent && !res.miscues.length)
+      : t.expect === 'silent' ? res.silent
+      : res.miscues.some(m => m.word.includes(t.expect.split(':')[1]));
+
+    $('#c-' + stop).classList.remove('active');
+    $('#c-' + stop).classList.add('done');
+    $('#s-' + stop).innerHTML = pass
+      ? '<span class="ok">as expected</span>' : '<span class="bad">differs — still useful, keep going</span>';
+    const box = $('#r-' + stop);
+    box.hidden = false;
+    const d = { ctxState: diag.ctxState, chunks: diag.chunks, results: diag.results,
+                lastError: diag.lastError, peakLevel: Math.round(peak * 100) / 100 };
+    results[stop].diag = d;
+    box.textContent =
+      `at threshold ${MIN_CONFIDENCE}: ${got}\n` +
+      `audio: ctx=${d.ctxState} chunks=${d.chunks} results=${d.results}` +
+      (d.lastError ? ` error=${d.lastError}` : '') + '\n' +
+      (heard.length
+        ? heard.map(w => `  ${w.word.padEnd(18)} ${Number(w.conf).toFixed(2)}`).join('\n')
+        : (d.chunks === 0
+            ? '  NO AUDIO REACHED THE RECOGNIZER — mic or AudioContext problem'
+            : '  audio flowed but nothing was recognised'));
+
+    document.querySelector(`[data-rec="${stop}"]`).disabled = false;
+    e.target.disabled = true;
+    dump();
+  }
+});
+
+/* ---- checklist ---- */
+$('#checklist').innerHTML = CHECKS.map((c, i) =>
+  `<label class="chk"><input type="checkbox" data-chk="${i}">${c}</label>`).join('');
+$('#checklist').addEventListener('change', dump);
+
+$('#skipto').onclick = () => $('#checklist').scrollIntoView({ behavior: 'smooth' });
+$('#clearall').onclick = () => { TRIALS.forEach(t => clearTrial(t.id)); };
+$('#mic-hide').onclick = () => {
+  const m = $('#mic-meter');
+  const hidden = m.classList.toggle('collapsed');
+  $('#mic-hide').textContent = hidden ? 'show sound meter' : 'hide';
+};
+
+/* ---- export ---- */
+function dump() {
+  const checks = {};
+  document.querySelectorAll('[data-chk]').forEach(el => { checks[CHECKS[el.dataset.chk]] = el.checked; });
+  $('#out').value = JSON.stringify({
+    kind: 'practice-lab-results', when: new Date().toISOString(),
+    capabilities: caps, trials: results, checklist: checks
+  }, null, 1);
+}
+
+$('#copy').onclick = async () => {
+  $('#out').select();
+  try { await navigator.clipboard.writeText($('#out').value); }
+  catch (e) { document.execCommand('copy'); }
+  $('#copied').textContent = 'copied — paste it into the chat';
+  setTimeout(() => { $('#copied').textContent = ''; }, 4000);
+};
+dump();
+</script>
+</body>
+</html>

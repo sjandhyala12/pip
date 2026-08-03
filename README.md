@@ -1,7 +1,7 @@
 # The Reading Patch — Netlify Handoff
 
-A reading-comprehension app for 2nd–3rd graders. Six themed "story worlds," each with
-10 passages and 5 questions per passage. Kids read a passage, answer questions, get
+A reading-comprehension app for 2nd–3rd graders. Six themed "story worlds," with
+99 total passages and 5 questions per passage. Kids read a passage, answer questions, get
 kind feedback (hint → retry → explanation), and earn "berries" that grow a pet unique
 to each world. Progress is saved per device.
 
@@ -44,6 +44,13 @@ netlify_handoff/
 ├── app.js              ← app logic: screens, scoring, feedback, shop, dashboard, localStorage
 ├── accessories.js      ← Berry Shop items (hats, glasses, backgrounds) — add items here
 ├── speech.js           ← optional read-aloud (Web Speech API) — no network, no keys
+├── listen.js           ← optional microphone reading-practice listener (Vosk in-browser)
+├── miscue.js           ← pure segmentation, vocabulary, and miscue-classification logic
+├── vendor/vosk.js      ← vendored vosk-browser runtime
+├── models/             ← local Vosk model archive served by the static site
+├── data/model-vocab.txt← extracted model vocabulary used by tests/tools
+├── tools/              ← maintenance scripts, including vocab extraction
+├── tests/              ← node:test coverage for practice/miscue logic
 ├── pets/               ← pet art, ONE FILE PER ANIMAL (edit each separately)
 │   ├── index.js        ← assembles the animals + exposes petSVG()
 │   ├── berry.js        ← Pip the berry sprite (5 growth stages)
@@ -196,12 +203,19 @@ reference for the scoring, feedback, and growth logic.
 ## Notes & limitations
 - Progress is stored in `localStorage` (key `reading-patch-v1`) — per browser/device, no accounts.
   Saved fields: `berries` (wallet), `earned` (growth), `records` (stars), `stats` (dashboard),
-  `owned` + `equipped` (shop), `readAloud` (setting). Older saves without newer fields are migrated on load.
+  `owned` + `equipped` (shop), `readAloud` (setting), `practice` / `practiceStuck` (reading
+  practice settings), and `practiceWords` (words to practice). Older saves without newer fields
+  are migrated on load.
 - **Optional read-aloud** (`speech.js`, Web Speech API): a **Listen** button on each story reads
   the passage aloud, and a speaker button on each question reads the question and choices. It
   uses the browser's built-in voices — no network or API keys — and is hidden on browsers that
   don't support it. A parent toggle in the dashboard turns the whole feature on/off (default on).
   Passage text size is adjustable (A-/A+).
+- **Optional read-to-me practice** (`listen.js`, `miscue.js`, `vendor/vosk.js`, `models/`):
+  parents can enable microphone-based line reading from the dashboard. Recognition runs locally
+  in the browser with the vendored Vosk runtime and local model archive. The app classifies
+  omissions, substitutions, and likely inventions, prompts the child to reread a line when needed,
+  and adds missed words to the parent dashboard practice list. Microphone audio is not uploaded.
 - Feedback uses the “pet pops up” style (a speech bubble beside the pet). The logic lives in
   `app.js` (`feedback()` + `viewQuiz()`) if you want to change it.
 
@@ -213,4 +227,6 @@ child can't wander in and hit Reset. It shows:
   line. Timing is measured from when each question appears to the child's first answer, saved
   per category in `localStorage`.
 - Comprehension by skill — first-try correct rate for Main idea / Detail / Why / Inference.
+- Reading practice settings, including the microphone practice toggle, stuck behavior, and
+  accumulated words to practice.
 - Reset progress.

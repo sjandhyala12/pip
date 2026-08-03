@@ -459,6 +459,24 @@ button { font-family: inherit; }
 .gate-input:focus { outline: none; border-color: var(--primary); }
 .gate-err { color: #C04B3C; font-weight: 700; font-size: 14px; min-height: 20px; margin-bottom: 8px; }
 
+/* ---------- reading practice ---------- */
+.practice-done { color: var(--faint); font-size: 15px; line-height: 1.7; margin-bottom: 10px; }
+.practice-current { font-size: var(--psize); font-weight: 700; line-height: 1.9; margin: 10px 0; }
+.practice-upcoming { color: #C9C2DC; font-size: 15px; line-height: 1.7; margin-top: 10px; }
+.pw { padding: 1px 2px; border-radius: 5px; }
+.pw-match { color: #2F7A55; background: #E7F5EE; }
+.pw-miss { color: #A86E1F; background: #FFF4DC; }
+.practice-note { font-weight: 700; color: var(--muted); margin: 12px 0; }
+.practice-note.listening { color: #C04B3C; }
+.practice-gate { margin-top: 14px; }
+.practice-gate-cancel { display: inline-block; margin-top: 12px; }
+.word-chips { display: flex; flex-wrap: wrap; gap: 8px; margin: 10px 0; }
+.word-chip {
+  background: var(--track); border: 2px solid var(--border); border-radius: 999px;
+  padding: 5px 12px; font-weight: 700; display: inline-flex; gap: 7px; align-items: center;
+}
+.word-n { color: var(--faint); font-size: 13px; }
+
 /* ---------- responsive ---------- */
 @media (max-width: 900px) {
   .home-grid { grid-template-columns: repeat(2, 1fr); }
@@ -484,3 +502,35 @@ button { font-family: inherit; }
   .shop-grid { grid-template-columns: repeat(2, 1fr); }
   .shop-hero { flex-direction: column; text-align: center; }
 }
+
+/* ---------- microphone level meter ----------
+ * A rolling bar graph so a child can see they are being heard. Drawn to canvas
+ * by meter.js and fed from listen.js's onLevel; never re-rendered.
+ *
+ * The first version used a track tinted var(--track) on the var(--page) cream
+ * background — near-identical colours, so it was effectively invisible. The
+ * surface below is deliberately higher contrast.
+ */
+.mic-meter {
+  display: flex; align-items: center; gap: 10px;
+  max-width: 340px; margin: 20px auto 0;
+  background: #FFFFFF; border: 2px solid var(--border); border-radius: 999px;
+  padding: 7px 8px 7px 14px;
+  box-shadow: 0 3px 0 rgba(53,49,95,0.06);
+}
+.mic-meter.off {
+  justify-content: center; background: none; border: none;
+  box-shadow: none; padding: 6px;
+}
+.mic-ico { font-size: 15px; line-height: 1; filter: grayscale(0.25); }
+.mic-canvas {
+  flex: 1; height: 28px; width: 100%; display: block;
+}
+.mic-toggle {
+  background: none; border: none; cursor: pointer; padding: 3px 8px;
+  font-family: 'Nunito', sans-serif; font-size: 11.5px; font-weight: 800;
+  color: var(--faint); text-decoration: underline; white-space: nowrap;
+}
+.mic-toggle:hover { color: var(--muted); }
+/* Too quiet to recognise reliably — a nudge, not an error. */
+.mic-meter.quiet { border-color: #E8A23D; }

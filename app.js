@@ -12,6 +12,9 @@ import { CATEGORIES, LEVELS } from './passages/index.js';
 import { petSVG } from './pets/index.js';
 import { ACCESSORIES, ACC_BY_ID, accOverlay, accBg, SHOP_GROUPS, OVERLAY_SLOTS, inSeason, MONTH_NAMES } from './accessories.js';
 import { speechSupported, speak, stopSpeech, isSpeaking } from './speech.js';
+import { segment, grammarWords, classify, isUnscoreable, normalize } from './miscue.js';
+import { listenSupported, modelCacheState, loadModel, listenForLine, stopListening, releaseMicrophone } from './listen.js';
+import { createMeter, QUIET_LEVEL } from './meter.js';
 
 /* ---------- constants ---------- */
 const STAGES = [10, 25, 50, 80];              // berry thresholds for growth
@@ -33,7 +36,11 @@ const state = {
   qStart: 0, qAnswered: false,
   gateOpen: false, gate: null,
   levelFilter: 0,                               // 0 = all, or 1/2/3
-  readAloud: true                               // read-aloud buttons on/off (parent setting)
+  readAloud: true,                              // read-aloud buttons on/off (parent setting)
+  practice: false, practiceStuck: 'help', practiceWords: {}, micMeter: true,
+  lines: [], lineIndex: 0, lineAttempt: 0, lineWords: [],
+  listenState: 'idle', modelPct: 0, cacheState: null, awaitingResult: false,
+  practiceGate: null
 };
 
 function loadProgress() {
@@ -47,13 +54,17 @@ function loadProgress() {
       state.owned = d.owned || {};
       state.equipped = d.equipped || {};
       if (typeof d.readAloud === 'boolean') state.readAloud = d.readAloud;
+      if (typeof d.practice === 'boolean') state.practice = d.practice;
+      if (d.practiceStuck === 'help' || d.practiceStuck === 'grownup') state.practiceStuck = d.practiceStuck;
+      state.practiceWords = d.practiceWords || {};
+      if (typeof d.micMeter === 'boolean') state.micMeter = d.micMeter;
       // `earned` (lifetime, drives growth) defaults to the current wallet for older saves.
       state.earned = d.earned || Object.assign({}, state.berries);
     }
   } catch (e) { /* ignore */ }
 }
 function saveProgress() {
-  try { localStorage.setItem(KEY, JSON.stringify({ berries: state.berries, records: state.records, stats: state.stats, earned: state.earned, owned: state.owned, equipped: state.equipped, readAloud: state.readAloud })); }
+  try { localStorage.setItem(KEY, JSON.stringify({ berries: state.berries, records: state.records, stats: state.stats, earned: state.earned, owned: state.owned, equipped: state.equipped, readAloud: state.readAloud, practice: state.practice, practiceStuck: state.practiceStuck, practiceWords: state.practiceWords, micMeter: state.micMeter })); }
   catch (e) { /* ignore */ }
 }
 
@@ -63,6 +74,14 @@ const passage = () => { const c = cat(); return c ? c.passages.find(p => p.id ==
 const totalBerries = () => Object.values(state.berries).reduce((a, b) => a + b, 0);
 const growthOf = (id) => state.earned[id] || 0;   // lifetime berries → pet growth
 const walletOf = (id) => state.berries[id] || 0;  // spendable berries
+/* Single gate for "should practice mode run right now?".
+ * speechSupported is required, not optional: practice pronounces the missed word
+ * and reads a stuck line aloud, and it advances from those callbacks. Without
+ * speech the feature has no way to help and no way to move on.
+ * cacheState is null until the async probe resolves; null is treated as fine. */
+const practiceActive = () =>
+  state.practice && listenSupported && speechSupported && state.cacheState !== 'insufficient';
+const practiceAvailable = () => listenSupported && speechSupported;
 
 // Pet illustration plus any worn accessories (overlays + background).
 function petArt(c, stageKey) {
@@ -241,12 +260,90 @@ function viewCat() {
     </div>`;
 }
 
+function viewPractice() {
+  const c = cat();
+  const p = passage();
+  const done = state.lines.slice(0, state.lineIndex);
+  const current = state.lines[state.lineIndex] || '';
+  const upcoming = state.lines.slice(state.lineIndex + 1);
+
+  const wordSpans = current.split(/\s+/).filter(Boolean).map((w, i) => {
+    const st = state.lineWords[i] || 'pending';
+    return `<span class="pw pw-${st}">${esc(w)}</span>`;
+  }).join(' ');
+
+  let panel = '';
+  if (state.listenState === 'idle') {
+    panel = `<button class="btn-3d btn-primary" data-action="startPractice">Start reading</button>`;
+  } else if (state.listenState === 'loading') {
+    panel = `<div class="practice-note">Getting ready to listen${state.modelPct ? '... ' + state.modelPct + '%' : '...'}</div>`;
+  } else if (state.listenState === 'error') {
+    panel = `<div class="practice-note">The microphone isn't available.
+      <button class="link" data-action="skipPractice">Read it on your own instead</button></div>`;
+  } else if (state.listenState === 'starting') {
+    panel = `<div class="practice-note">Getting the microphone ready&hellip;</div>`;
+  } else if (state.listenState === 'listening') {
+    panel = `<div class="practice-note listening">Listening... read the line out loud</div>`;
+  }
+
+  let stuck = '';
+  if (state.practiceGate) {
+    stuck = `
+      <div class="gate-card practice-gate">
+        <div class="panel-title">Grown-ups only</div>
+        <div class="panel-sub">Ask a grown-up to solve this to unlock the line.</div>
+        <div class="gate-prompt">${state.practiceGate.prompt} = ?</div>
+        <input id="practice-gate-input" class="gate-input" type="number" inputmode="numeric" autocomplete="off" aria-label="Answer">
+        <div class="gate-err">${esc(state.practiceGate.error || '')}</div>
+        <button class="btn-3d btn-primary" data-action="practiceGateSubmit">Unlock</button>
+        <button class="link practice-gate-cancel" data-action="practiceGateCancel">Keep trying instead</button>
+      </div>`;
+  } else if (state.lineAttempt >= 3) {
+    stuck = state.practiceStuck === 'grownup'
+      ? `<button class="next-btn" data-action="unlockLine">Need help? Ask a grown-up</button>`
+      : `<button class="next-btn" data-action="unlockLine">Let's do this one together</button>`;
+  }
+
+  const meter = state.micMeter
+    ? `<div class="mic-meter" id="mic-meter">
+         <span class="mic-ico" aria-hidden="true">&#127908;</span>
+         <canvas id="mic-canvas" class="mic-canvas" width="240" height="28" aria-hidden="true"></canvas>
+         <button class="mic-toggle" data-action="toggleMeter" title="Hide the sound meter">hide</button>
+       </div>`
+    : `<div class="mic-meter off">
+         <button class="mic-toggle" data-action="toggleMeter" title="Show the sound meter">show sound meter</button>
+       </div>`;
+
+  return `
+    <div class="screen" style="${catVars(c)}--psize:${state.textSize}px;">
+      <div class="read-wrap">
+        <div class="read-topbar">
+          <button class="back-btn" data-action="backCat">&larr; Stories</button>
+          <div class="text-ctrls">
+            <button class="text-btn" data-action="textDown" title="Smaller text">A-</button>
+            <button class="text-btn" data-action="textUp" title="Bigger text">A+</button>
+          </div>
+        </div>
+        <div class="read-card">
+          <div class="read-meta">${levelBadge(p.level)}</div>
+          <h1 class="read-title">${esc(p.title)}</h1>
+          <div class="practice-done">${done.map(l => `<span>${esc(l)}</span>`).join(' ')}</div>
+          <div class="practice-current">${wordSpans}</div>
+          <div class="practice-upcoming">${upcoming.map(l => `<span>${esc(l)}</span>`).join(' ')}</div>
+        </div>
+        <div class="center">${panel}${stuck}</div>
+        ${meter}
+      </div>
+    </div>`;
+}
+
 function viewRead() {
+  if (practiceActive() && state.lines.length) return viewPractice();
   const c = cat();
   const p = passage();
   const paras = p.paras.map(t => `<p class="read-p">${esc(t)}</p>`).join('');
   const cta = state.quizStarted ? 'Back to the questions' : 'I\u2019m ready for the questions!';
-  return `
+    return `
     <div class="screen" style="${catVars(c)}--psize:${state.textSize}px;">
       <div class="read-wrap">
         <div class="read-topbar">
@@ -550,6 +647,16 @@ function viewDashboard() {
   }).join('');
 
   const hasData = allTimes.length > 0;
+  const practiceWords = Object.entries(state.practiceWords)
+    .map(([w, v]) => [w, (v.missed || 0) + (v.invented || 0)])
+    .filter(([, n]) => n > 0)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 12);
+  const practiceWordPanel = practiceWords.length
+    ? `<div class="word-chips">${practiceWords.map(([w, n]) =>
+      `<span class="word-chip">${esc(w)}<span class="word-n">${n}</span></span>`).join('')}</div>
+      <button class="link" data-action="clearPracticeWords">Clear this list</button>`
+    : `<div class="season-empty">No practice words yet - turn on Reading practice and read a story.</div>`;
 
   return `
     <div class="screen"><div class="dash-wrap">
@@ -584,9 +691,15 @@ function viewDashboard() {
         <div class="skill-bars">${skillBars}</div>
       </div>
 
+      <div class="panel">
+        <div class="panel-title">Words to practice</div>
+        <div class="panel-sub">Words your child missed while reading aloud. They drop off this list once read correctly.</div>
+        ${practiceWordPanel}
+      </div>
+
       <div class="panel setting-panel">
         <div>
-          <div class="panel-title" style="margin-bottom:2px">Read-aloud</div>
+          <div class="panel-title" style="margin-bottom:2px">Read to me</div>
           <div class="panel-sub" style="margin-bottom:0">${speechSupported
             ? 'Shows a Listen button on stories and a speaker on questions, so a child can hear the words.'
             : 'This browser does not support read-aloud.'}</div>
@@ -595,6 +708,33 @@ function viewDashboard() {
           <span class="toggle-track"><span class="toggle-knob"></span></span><span class="toggle-label">${state.readAloud ? 'On' : 'Off'}</span>
         </button>
       </div>
+
+      <div class="panel setting-panel">
+        <div>
+          <div class="panel-title" style="margin-bottom:2px">Reading practice</div>
+          <div class="panel-sub" style="margin-bottom:0">${practiceAvailable()
+            ? 'Your child reads each story out loud, one line at a time. The app listens and helps with words they miss. Everything is heard on this device only.'
+            : (listenSupported
+                ? 'This browser cannot speak words aloud, which reading practice needs to help your child - practice is unavailable.'
+                : 'This browser cannot listen - reading practice is unavailable.')}${
+            state.practice && state.cacheState === 'ephemeral'
+              ? ' <strong>This browser cannot save the voice model, so it downloads about 39 MB each session.</strong>' : ''}${
+            state.cacheState === 'insufficient'
+              ? ' <strong>Not enough storage is available on this device for the voice model.</strong>' : ''}</div>
+        </div>
+        <button class="toggle${state.practice ? ' on' : ''}" data-action="togglePractice" role="switch" aria-checked="${state.practice}"${practiceAvailable() && state.cacheState !== 'insufficient' ? '' : ' disabled'}>
+          <span class="toggle-track"><span class="toggle-knob"></span></span><span class="toggle-label">${state.practice ? 'On' : 'Off'}</span>
+        </button>
+      </div>
+      ${state.practice ? `
+      <div class="panel">
+        <div class="panel-title">When your child gets stuck</div>
+        <div class="panel-sub">After three tries on the same line.</div>
+        <div class="level-segs">
+          <button class="level-seg${state.practiceStuck === 'help' ? ' active' : ''}" data-action="setStuck" data-stuck="help">Help me and move on</button>
+          <button class="level-seg${state.practiceStuck === 'grownup' ? ' active' : ''}" data-action="setStuck" data-stuck="grownup">A grown-up unlocks it</button>
+        </div>
+      </div>` : ''}
 
       <div class="panel setting-panel">
         <div>
@@ -636,6 +776,7 @@ function viewAbout() {
         <div class="panel-sub">&bull;&nbsp; No accounts, sign-ups, or personal information are ever collected.</div>
         <div class="panel-sub">&bull;&nbsp; All progress (stars, berries, timing stats) is saved using this browser's storage, on this device only.</div>
         <div class="panel-sub">&bull;&nbsp; Nothing is sent to a server &mdash; no analytics, no trackers, no ads.</div>
+        <div class="panel-sub">&bull;&nbsp; When Reading practice is on, the app listens through the microphone to follow along. The listening happens entirely on this device &mdash; the recording is never uploaded, stored, or sent anywhere, and it is discarded as soon as the line is checked.</div>
         <div class="panel-sub">&bull;&nbsp; A different device or browser starts fresh. There's no account to sync, and nothing to delete on our end because nothing ever left this device.</div>
         <div class="panel-sub" style="margin-bottom:0">&bull;&nbsp; The &ldquo;Reset progress&rdquo; option on the dashboard clears this local data at any time.</div>
       </div>
@@ -646,6 +787,7 @@ function viewAbout() {
 const root = document.getElementById('app');
 function render() {
   stopSpeech();   // never let read-aloud bleed across screens
+  if (state.screen !== 'read') releaseMicrophone();
   const view = { home: viewHome, cat: viewCat, read: viewRead, quiz: viewQuiz, done: viewDone, dashboard: viewDashboard, shop: viewShop, about: viewAbout }[state.screen];
   root.innerHTML = view();
   window.scrollTo(0, 0);
@@ -681,8 +823,11 @@ function openStory(pid) {
     screen: 'read', pid, qIndex: 0, attempt: 0, wrong: [], results: [],
     runEarned: 0, lastEarned: 0, phase: 'answering', lastCorrect: false,
     quizStarted: false, startBerries: growthOf(state.catId),
-    qStart: 0, qAnswered: false
+    qStart: 0, qAnswered: false,
+    lines: [], lineIndex: 0, lineAttempt: 0, lineWords: [],
+    listenState: 'idle', modelPct: 0, practiceGate: null
   });
+  if (practiceActive()) state.lines = segment(passage().paras);
 }
 
 /* Record one answer's timing + skill accuracy into per-category stats.
@@ -761,11 +906,154 @@ function toggleEquip(id) {
 }
 
 function reset() {
-  if (!window.confirm('Start over? This clears all stars, berries, shop items, and stats for every pet on this device.')) return;
+  if (!window.confirm('Start over? This clears all stars, berries, shop items, practice words, and stats for every pet on this device.')) return;
   state.berries = {}; state.records = {}; state.stats = {};
   state.earned = {}; state.owned = {}; state.equipped = {};
+  state.practiceWords = {};
   saveProgress();
   render();
+}
+
+function recordMiscue(word, kind) {
+  const w = state.practiceWords[word] || (state.practiceWords[word] = { missed: 0, invented: 0, last: 0 });
+  if (kind === 'omission') w.missed++;
+  else w.invented++;
+  w.last = Date.now();
+}
+
+function creditWord(word) {
+  const w = state.practiceWords[word];
+  if (!w) return;
+  if (w.missed > 0) w.missed--;
+  else if (w.invented > 0) w.invented--;
+  if (w.missed <= 0 && w.invented <= 0) delete state.practiceWords[word];
+}
+
+async function startPractice() {
+  if (!practiceActive()) { state.lines = []; state.listenState = 'idle'; render(); return; }
+  state.listenState = 'loading';
+  render();
+  try {
+    await loadModel(pct => { state.modelPct = pct; render(); });
+  } catch (e) {
+    state.listenState = 'error';
+    render();
+    return;
+  }
+  listenLine();
+}
+
+async function listenLine() {
+  const line = state.lines[state.lineIndex];
+  if (!line) return;
+  const words = grammarWords(line);
+  state.lineWords = [];
+  // 'starting' until the graph is live — see onLive below. Saying "listening"
+  // before audio flows is what clipped the opening word of every line.
+  state.listenState = 'starting';
+  // One listening session consumes exactly one result. Vosk can deliver two —
+  // an endpoint result while the child reads, then the final result that
+  // stopListening() requests — and the second would re-enter handleHeard and
+  // restart a line the child has already finished.
+  state.awaitingResult = true;
+  render();
+
+  if (!words.length) { advanceLine(); return; }
+
+  try {
+    await listenForLine(words, {
+      onLive: () => { state.listenState = 'listening'; render(); },
+      onLevel: paintMeter,
+      onResult: heard => handleHeard(heard)
+    });
+  } catch (e) {
+    state.listenState = 'error';
+    render();
+  }
+}
+
+function handleHeard(heard) {
+  // A final result is an async round trip, so it can land after we have already
+  // torn down — leaving the read screen, or skipping practice. Ignore late
+  // arrivals, or they could classify a line the child is no longer on and
+  // advance them into the quiz.
+  if (state.screen !== 'read' || !practiceActive() || !state.lines.length) return;
+  if (!state.awaitingResult) return;   // second result for this session; ignore
+  state.awaitingResult = false;
+  stopListening();
+  const line = state.lines[state.lineIndex];
+  const expected = line.split(/\s+/);
+  const res = classify(expected, heard);
+
+  if (res.silent) { listenLine(); return; }
+
+  state.lineWords = expected.map((w, i) =>
+    res.miscues.some(m => m.index === i) ? 'miss'
+      : (res.matched.includes(i) || isUnscoreable(w) ? 'match' : 'pending'));
+
+  if (!res.miscues.length) {
+    expected.forEach(w => creditWord(normalize(w)));
+    saveProgress();
+    advanceLine();
+    return;
+  }
+
+  const first = res.miscues[0];
+  recordMiscue(first.word, first.kind);
+  saveProgress();
+  state.lineAttempt++;
+  render();
+  speak(first.word, { onEnd: () => { if (state.lineAttempt < 3) listenLine(); } });
+}
+
+/* Paint the mic level straight into the DOM.
+ * Deliberately NOT via render(): that rebuilds the whole screen on every audio
+ * callback (~11x/sec), which would destroy focus and make the page unusable.
+ * Same approach the read-aloud buttons already use. */
+let micMeter = null;
+function paintMeter(level) {
+  const canvas = document.getElementById('mic-canvas');
+  if (!canvas) { micMeter = null; return; }
+  // render() replaces the DOM, so rebind whenever the canvas is a new element.
+  if (!micMeter || micMeter.el !== canvas) {
+    if (micMeter) micMeter.destroy();
+    micMeter = createMeter(canvas);
+    micMeter.el = canvas;
+  }
+  micMeter.push(level);
+  const box = document.getElementById('mic-meter');
+  if (box) box.classList.toggle('quiet', level < QUIET_LEVEL);
+}
+
+function helpAndAdvance() {
+  stopListening();
+  state.practiceGate = null;
+  speak(state.lines[state.lineIndex], { onEnd: () => advanceLine() });
+}
+
+function handlePracticeGate() {
+  const el = document.getElementById('practice-gate-input');
+  const val = el ? parseInt(el.value, 10) : NaN;
+  if (val === state.practiceGate.answer) { helpAndAdvance(); return; }
+  state.practiceGate = makeGate();
+  state.practiceGate.error = 'Not quite - try again.';
+  render();
+}
+
+function advanceLine() {
+  state.lineIndex++;
+  state.lineAttempt = 0;
+  state.lineWords = [];
+  if (state.lineIndex >= state.lines.length) {
+    stopListening();
+    state.listenState = 'idle';
+    state.quizStarted = true;
+    state.qStart = Date.now();
+    state.screen = 'quiz';
+    render();
+    return;
+  }
+  listenLine();
 }
 
 /* grown-ups gate: a small multiplication challenge before the dashboard opens */
@@ -804,6 +1092,23 @@ root.addEventListener('click', e => {
     case 'shopLocked': { const c = cat(); alert('The Berry Shop opens once ' + c.petName + ' grows to the Big stage. Keep reading to earn berries!'); break; }
     case 'speak': handleSpeak(el); break;
     case 'toggleReadAloud': state.readAloud = !state.readAloud; saveProgress(); render(); break;
+    case 'togglePractice': state.practice = !state.practice; saveProgress(); render(); break;
+    case 'setStuck': state.practiceStuck = el.dataset.stuck; saveProgress(); render(); break;
+    case 'clearPracticeWords': state.practiceWords = {}; saveProgress(); render(); break;
+    case 'startPractice': startPractice(); break;
+    case 'skipPractice': state.lines = []; state.listenState = 'idle'; releaseMicrophone(); render(); break;
+    case 'unlockLine':
+      stopListening();
+      if (state.practiceStuck === 'grownup') { state.practiceGate = makeGate(); render(); break; }
+      helpAndAdvance();
+      break;
+    case 'toggleMeter': state.micMeter = !state.micMeter; saveProgress(); render(); break;
+    case 'practiceGateSubmit': handlePracticeGate(); break;
+    case 'practiceGateCancel':
+      state.practiceGate = null;
+      state.lineAttempt = 0;
+      listenLine();
+      break;
     case 'buy': buyItem(el.dataset.item); break;
     case 'equip': toggleEquip(el.dataset.item); break;
     case 'setLevel': state.levelFilter = parseInt(el.dataset.level, 10); render(); break;
@@ -814,8 +1119,17 @@ root.addEventListener('click', e => {
 
 root.addEventListener('keydown', e => {
   if (e.target && e.target.id === 'gate-input' && e.key === 'Enter') { e.preventDefault(); handleGate(); }
+  if (e.target && e.target.id === 'practice-gate-input' && e.key === 'Enter') { e.preventDefault(); handlePracticeGate(); }
 });
 
 /* ---------- start ---------- */
 loadProgress();
 render();
+if (listenSupported) {
+  // Re-render the dashboard (toggle/warning) and the read screen (which may need
+  // to fall back out of practice mode) once the probe resolves.
+  modelCacheState().then(s => {
+    state.cacheState = s;
+    if (state.screen === 'dashboard' || state.screen === 'read') render();
+  });
+}
