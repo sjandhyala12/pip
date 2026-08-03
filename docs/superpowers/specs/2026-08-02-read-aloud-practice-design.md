@@ -101,7 +101,8 @@ Wraps `vosk-browser` entirely — model loading and caching, microphone capture,
 per-line grammar-constrained recognition. No other file references Vosk.
 
 ```js
-export const listenSupported            // WASM + getUserMedia + Web Audio, feature-detected
+export const listenSupported            // can we listen at all? (see capability tiers)
+export function modelCacheState()       // → 'persistent' | 'ephemeral' | 'insufficient'
 export function loadModel(onProgress)   // → Promise, caches in Cache Storage
 export function listenForLine(words, { onPartial, onResult })
 export function stopListening()
@@ -198,10 +199,37 @@ permanently stuck. The spike found 6 such words after possessive splitting:
 `my-backwards` is the decisive case: its whole point is text that reads backwards, so no
 recognizer can ever match it and no adult could unlock it either.
 
-**Rule:** words in this set are marked *unscoreable* at segmentation time. They auto-pass —
-never flagged as an omission or invention, never spoken as a correction, never counted
-toward the words-to-practice list. Because the corpus is fixed, the set is a precomputed
-constant in `miscue.js`, not a runtime vocabulary lookup.
+Words in this set are marked *unscoreable* at segmentation time. Because the corpus is
+fixed, the set is a precomputed constant in `miscue.js`, not a runtime vocabulary lookup.
+
+"Auto-pass" is not sufficient on its own: when the child actually *says* an unscoreable
+word, Vosk emits `[unk]`, and that token must be explicitly absorbed or the classifier will
+still raise a blocking invention. The full mechanism:
+
+**Grammar construction.** Unscoreable words are omitted from the grammar (they cannot be
+represented). Grammar = scoreable words of the line + `[unk]`.
+
+**Alignment.** The expected sequence retains *all* words including unscoreable ones, so
+order and on-screen positions stay intact. Each expected word carries a `scoreable` flag.
+
+**Classification, applied in this order:**
+
+1. An unscoreable expected position **always resolves to pass**, whatever aligned to it —
+   gap, `[unk]`, or any word. It is never an omission and never a substitution.
+2. A `[unk]` aligned to an unscoreable position is **consumed** by it and contributes
+   nothing further.
+3. A `[unk]` or unmatched heard token within one position of an unscoreable expected word
+   is **also consumed**, since the child's utterance for an unknown word frequently aligns
+   a slot off. This deliberately over-absorbs rather than risk a false invention.
+4. Only then are the general rules below applied to what remains.
+
+Step ordering matters: without it, rule 3 and the stray-`[unk]` rule under *What blocks
+advancement* can reach opposite conclusions about the same token.
+
+**Consequences.** Unscoreable words never tint amber, are never spoken as a correction, and
+never reach the words-to-practice list. A line whose words are *all* unscoreable passes
+without listening at all. Unscoreable words tint green with the rest of the line on success,
+so nothing looks skipped to the child.
 
 **Adding new content:** any story added later must be re-checked against the model
 vocabulary, or a child could hit the same trap. A test asserts the unscoreable set covers
@@ -230,14 +258,21 @@ running-record practice:
 - **Repetitions don't count.** Children re-read phrases constantly while decoding.
 - **Fillers** (`um`, `uh`) are dropped.
 - **A stray `[unk]`** between two correctly matched words, with no adjacent omission, is
-  almost always a breath or background noise. Non-blocking.
+  almost always a breath or background noise. Non-blocking. (Applies only to tokens not
+  already consumed by the unscoreable rules above.)
 
 ### Confidence gate
 
 Vosk returns per-word confidence. A miscue is raised only when confidence clears a
 threshold — the app corrects the child only when the recognizer is confident they got it
 wrong. The threshold starts deliberately conservative and loosens only if genuine errors
-are demonstrably slipping through. Tuned during the spike.
+are demonstrably slipping through.
+
+**The threshold is untuned and must not be assumed validated.** The spike could not tune it
+— that needs recordings of a real child reading, which do not exist yet. Implementation
+ships a single named constant with a deliberately conservative value and a comment saying
+so. Tuning happens against real recordings once a prototype exists, per the guiding
+principle above.
 
 ### Correction behavior
 
@@ -273,6 +308,24 @@ modelPct: 0
 saves are fully backward compatible** — absent keys mean practice is off and the app
 behaves exactly as it does today.
 
+### Reset behavior
+
+`reset()` (`app.js:763`) clears progress but deliberately leaves `readAloud` alone. That
+establishes the rule: **progress data clears, parent settings survive.** Applying it:
+
+| Field | On global Reset | Why |
+|---|---|---|
+| `practiceWords` | **cleared** | Progress data, like `stats` |
+| `practice` | **preserved** | Parent setting, like `readAloud` |
+| `practiceStuck` | **preserved** | Parent setting |
+
+`reset()` must be updated to clear `practiceWords` — an implementer following the existing
+line literally would leave stale practice data behind. The confirm dialog copy ("clears all
+stars, berries, shop items, and stats") also needs "and practice words" added.
+
+The words-to-practice panel's own "clear list" action clears `practiceWords` only, leaving
+everything else untouched.
+
 ## Parent dashboard
 
 ### Two controls
@@ -295,12 +348,36 @@ the child later reads that word correctly**, dropping off the list at zero. With
 a word mastered weeks ago would sit on the parent's list forever and the panel would
 slowly become worthless. Cheap to implement, since every correct read is already known.
 
+## Capability tiers
+
+Listening and *storing the model* are separate capabilities, and a browser can have the
+first without the second. Conflating them would let a child into practice mode that
+re-downloads 39 MB on every single story.
+
+**Tier 1 — can we listen at all?** (`listenSupported`)
+Secure context (`window.isSecureContext` — `getUserMedia` requires it), `WebAssembly`,
+`navigator.mediaDevices.getUserMedia`, and Web Audio. All feature-detected, never
+user-agent sniffed. If false: practice unavailable, dashboard toggle disabled with a reason.
+
+**Tier 2 — can we keep the model?** (`modelCacheState()`)
+
+| Result | Condition | Behavior |
+|---|---|---|
+| `persistent` | Cache Storage present, test write succeeds, `navigator.storage.estimate()` shows headroom for ~75 MB | Normal. Download once. |
+| `ephemeral` | Cache Storage missing or test write fails (Safari private browsing is the concrete case) | Practice still offered, but the dashboard toggle carries a plain warning: this browser can't save the voice model, so it re-downloads about 39 MB each session. Parent decides. |
+| `insufficient` | Quota estimate below what the model needs | Practice unavailable, with a "not enough storage on this device" reason — distinct from "not supported", because it is fixable. |
+
+A capability test-write is required rather than a bare `'caches' in window` check: Safari
+exposes the API in private browsing and fails on write.
+
 ## Read screen states
 
 | State | Behavior |
 |---|---|
-| Unsupported browser | Practice unavailable; normal read screen. Dashboard toggle disabled with a reason — mirrors how `speechSupported` disables the read-aloud toggle at `app.js:594`. Detection is by capability (WASM, `getUserMedia`, Web Audio), never by user-agent string |
+| Unsupported browser | Practice unavailable; normal read screen. Dashboard toggle disabled with a reason — mirrors how `speechSupported` disables the read-aloud toggle at `app.js:594`. Detection per Tier 1 above, never by user-agent string |
+| Insufficient storage | Practice unavailable, with a distinct "not enough storage" reason (Tier 2 `insufficient`) — fixable, unlike unsupported |
 | First run | "Getting ready to listen…" + download progress. Model cached in Cache Storage; instant thereafter |
+| Re-download (`ephemeral`, or evicted) | "Getting the voice model again…" — same progress UI, different copy, so a parent seeing repeated downloads understands why rather than assuming a bug |
 | Mic prompt | Fires only on an explicit "Start reading" tap — never automatically on screen load |
 | Permission denied | Clear message + "Read it on your own instead" → falls back to the normal read screen for that story |
 | Listening | Mic indicator; finished lines in normal ink above, current line prominent, upcoming lines dimmed |
@@ -314,17 +391,39 @@ today's app rather than blocking.
 
 ## About page update
 
-The About screen currently states "Nothing is sent to a server" (`app.js:638`). Microphone
-use must be disclosed even though audio never leaves the device — arguably especially so,
-since "we listen, and it stays here" is the strongest form of this app's privacy story.
+The About screen currently states "Nothing is sent to a server" (`app.js:638`). Two things
+must change together, because shipping an edit to a privacy claim that remains inaccurate
+is worse than not touching it.
 
-Add to the Privacy panel:
+### 1. Disclose the microphone
+
+Microphone use must be disclosed even though audio never leaves the device — arguably
+especially so, since "we listen, and it stays here" is the strongest form of this app's
+privacy story. Add to the Privacy panel:
 
 > When Reading practice is on, the app listens through the microphone to follow along.
 > The listening happens entirely on this device — the recording is never uploaded, stored,
 > or sent anywhere, and it is discarded as soon as the line is checked.
 
-This copy change is part of this work, not a follow-up.
+### 2. Resolve the Google Fonts contradiction
+
+`index.html:7-9` loads Baloo 2 and Nunito from `fonts.googleapis.com` and
+`fonts.gstatic.com`, sending the child's IP and user-agent to Google on every page load.
+The existing "Nothing is sent to a server" claim is therefore already inaccurate, before
+this feature adds anything.
+
+**Recommended: self-host the fonts.** Measured cost is **315 KB across 9 woff2 files** —
+negligible beside the 39 MB model, requires no build step, removes the only third-party
+request in the app, and makes the app fully offline-capable, which pairs naturally with an
+offline speech model. The privacy claim then becomes literally true rather than
+approximately true.
+
+**Alternative: soften the claim** to name the font CDN as the one exception. Cheaper, but
+leaves a real third-party request in a children's app whose selling point is that there
+isn't one.
+
+This is a decision for the user, not an implementation detail. Default is self-hosting
+unless they say otherwise.
 
 ## Testing
 
@@ -335,6 +434,18 @@ build step, consistent with the project's constraints.
 
 Fixtures covering: perfect read, single omission, substitution, `[unk]`, self-correction,
 repetition, filler, insertion, out-of-order words, empty transcript, full-line silence.
+
+**Unscoreable-word fixtures get their own group**, since the absorption rules are the
+subtlest part of the classifier and a bug there produces exactly the failure this design
+exists to prevent — blocking a child who read correctly:
+
+- `[unk]` aligned directly to an unscoreable word → pass, no miscue.
+- `[unk]` one position off from an unscoreable word → absorbed, no miscue.
+- Unscoreable word aligned to a gap (child skipped it) → pass, no miscue.
+- Two adjacent unscoreable words (`YTRAP AZZIP`) with two `[unk]`s → pass.
+- A line that is entirely unscoreable → passes without listening.
+- A *genuine* invention elsewhere in a line containing an unscoreable word → still caught.
+  This is the guard against over-absorption swallowing real errors.
 
 ### Segmentation tests against the real corpus
 
