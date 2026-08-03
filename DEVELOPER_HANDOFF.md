@@ -56,7 +56,9 @@ closely. Where a value maps cleanly onto an MUI concept (theme palette, typograp
   display face). Sizes: world/screen titles 32–34px, card titles 18–24px, buttons 17–19px.
 - **Body / passages / choices:** `"Nunito"`, weight 600–700. Passage body 18–26px
   (user-adjustable, default 22px), line-height 1.8. Choice text 17px.
-- Load both from Google Fonts.
+- Both are **self-hosted** from `fonts/` (variable woff2, `latin` subset, ~72 KB total).
+  Do not load them from Google Fonts — the app deliberately makes no third-party requests,
+  and its parent-facing privacy page says so.
 
 ### Shape & elevation
 - Card radius: 22–28px. Buttons: 16–18px. Chips/pills: 999px.
@@ -252,7 +254,8 @@ per growth stage, taking a `fill` color. `pets/index.js` assembles them and expo
 component — the SVG paths copy over directly. The float is a simple CSS keyframe.
 
 ## Assets
-- **Fonts:** Google Fonts "Baloo 2" (800) and "Nunito" (400/600/700/800).
+- **Fonts:** self-hosted "Baloo 2" (800) and "Nunito" (400/600/700/800) — variable woff2
+  files in `fonts/`, `latin` subset, ~72 KB total. No external font requests.
 - **Imagery:** none external — the pets, stars, and berry icon are all inline SVG. No photos.
 - **Icons:** hand-drawn inline SVG (berry = blue circle with a green sprout; star = classic
   5-point). No icon library required, though you may swap in MUI icons where appropriate.

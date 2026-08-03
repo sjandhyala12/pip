@@ -3,6 +3,32 @@
  * responsive layout (phone → tablet → desktop). No build step needed.
  */
 
+/* ---------- fonts ----------
+ * Self-hosted from fonts/ so the app makes no third-party requests and works
+ * fully offline. These are variable fonts: one file per family covers every
+ * weight, so the whole set is ~72 KB.
+ *
+ * Only the `latin` subset is shipped, which covers all characters used in the
+ * app's content and UI. Content using Cyrillic, Vietnamese, or Devanagari would
+ * fall back to a system font — check before adding stories in those scripts.
+ */
+@font-face {
+  font-family: 'Baloo 2';
+  font-style: normal;
+  font-weight: 400 800;
+  font-display: swap;
+  src: url('fonts/Baloo2-latin.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: 'Nunito';
+  font-style: normal;
+  font-weight: 200 1000;
+  font-display: swap;
+  src: url('fonts/Nunito-latin.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
 :root {
   --ink: #35315F;
   --muted: #77729B;
