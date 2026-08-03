@@ -915,6 +915,10 @@ export async function loadModel(onProgress) {
 // recognizer and the previous one must be removed.
 function makeRecognizer(sampleRate, words) {
   if (recognizer) { try { recognizer.remove(); } catch (e) { /* already gone */ } recognizer = null; }
+  // PROVISIONAL — Task 6b decides between this word-loop form and the
+  // single-phrase form. Vosk estimates an n-gram LM from these strings, so the
+  // choice changes the word-order prior and therefore whether omissions are
+  // detectable at all. Do not treat this line as settled.
   const grammar = JSON.stringify([...new Set(words), '[unk]']);
   const r = new model.KaldiRecognizer(sampleRate, grammar);
   r.setWords(true);
@@ -985,6 +989,115 @@ Expected: `true 'persistent'`, then the model downloads (~39 MB, slow the first 
 ```bash
 git add listen.js
 git commit -m "feat: add model loading and per-line grammar-constrained recognition"
+```
+
+---
+
+### Task 6b: Grammar form gate — BLOCKING
+
+**Do not start Task 7 until this resolves.** Everything downstream assumes the recognizer
+surfaces omissions and inventions; if the grammar form is wrong, the app will be built on a
+detector that quietly reports nothing.
+
+Vosk does not treat the grammar array as fixed phrase alternatives — it estimates an n-gram
+LM (order ≥ 2, with discounting) from those strings. Both candidate forms are legal and give
+different word-order priors. The form that recognizes most accurately is also the form most
+likely to hallucinate a skipped word, because that path fits the LM. See the spec's "Grammar
+form" section.
+
+**Files:**
+- Modify: `listen.js` (the `makeRecognizer` grammar assembly only)
+- Create: `docs/superpowers/specs/2026-08-02-grammar-form-result.md`
+
+**Interfaces:**
+- Consumes: `listenForLine` from Task 6.
+- Produces: a decided `GRAMMAR_FORM` constant in `listen.js`, plus a written result doc.
+
+- [ ] **Step 1: Make the form switchable**
+
+In `listen.js`, replace the grammar line in `makeRecognizer` with:
+
+```js
+// Which grammar form to feed Vosk. Vosk estimates an n-gram LM from these
+// strings, so the form changes the word-order prior — see Task 6b.
+export const GRAMMAR_FORM = 'words';   // 'words' | 'phrase'
+
+function buildGrammar(words) {
+  const uniq = [...new Set(words)];
+  return GRAMMAR_FORM === 'phrase'
+    ? JSON.stringify([words.join(' '), '[unk]'])   // one phrase: strong order prior
+    : JSON.stringify([...uniq, '[unk]']);          // word loop: no order prior
+}
+```
+
+and use `buildGrammar(words)` where the grammar string was built inline.
+
+- [ ] **Step 2: Build a throwaway harness page**
+
+Create `grammar-probe.html` at the repo root (delete it after this task):
+
+```html
+<!doctype html><meta charset="utf-8"><title>grammar probe</title>
+<body style="font:16px system-ui;padding:24px">
+<p id="line" style="font-size:24px;font-weight:700"></p>
+<button id="go">Listen</button>
+<pre id="out"></pre>
+<script type="module">
+const LINE = ['the','beaver','builds','a','strong','dam'];
+document.getElementById('line').textContent = LINE.join(' ');
+const L = await import('./listen.js');
+await L.loadModel(() => {});
+document.getElementById('go').onclick = async () => {
+  await L.listenForLine(LINE, { onResult: h => {
+    L.stopListening();
+    document.getElementById('out').textContent =
+      `form=${L.GRAMMAR_FORM}\n` + h.map(w => `${w.word}  ${w.conf.toFixed(2)}`).join('\n');
+    console.log(L.GRAMMAR_FORM, h);
+  }});
+};
+</script>
+```
+
+- [ ] **Step 3: Run the four trials, for BOTH forms**
+
+Serve with `python3 -m http.server 8000`, open `grammar-probe.html`, and read the line aloud
+four ways. Then flip `GRAMMAR_FORM` to `'phrase'`, reload, and repeat all four.
+
+| Trial | Say | Required behavior |
+|---|---|---|
+| A. Clean read | "the beaver builds a strong dam" | All six words returned, in order, decent confidence |
+| B. Omission | "the beaver builds a dam" (skip **strong**) | `strong` must be ABSENT. If it appears, the LM hallucinated it — this form cannot detect omissions |
+| C. Substitution | "the beaver builds a **big** dam" | Position 5 must be `[unk]` or anything other than `strong` |
+| D. Invention | "the beaver builds a **florp** dam" | Position 5 must come back `[unk]` |
+
+- [ ] **Step 4: Decide and record**
+
+Trial B is the decisive one. Pick the form that passes B, C, and D; prefer `phrase` only if
+it passes all three, since it also wins A.
+
+Write `docs/superpowers/specs/2026-08-02-grammar-form-result.md` recording, for each form,
+the raw transcript of all four trials, the chosen form, and the reasoning. Set
+`GRAMMAR_FORM` to the winner and delete the `'phrase' | 'words'` branch that lost, leaving
+a comment pointing at the result doc.
+
+- [ ] **Step 5: If BOTH forms fail trial B**
+
+Do not proceed to Task 7. Neither grammar form can detect omissions, which invalidates the
+core premise. Fall back options, in order of preference, to be discussed with the user:
+
+1. Use word-level timings (`start`/`end`, already returned) to detect gaps in the audio
+   where an expected word should have been, instead of relying on the transcript.
+2. Drop omission detection and ship invention detection only, revising the spec's purpose.
+3. Reconsider the whole approach.
+
+Report the trial transcripts to the user before choosing.
+
+- [ ] **Step 6: Clean up and commit**
+
+```bash
+rm grammar-probe.html
+git add listen.js docs/superpowers/specs/2026-08-02-grammar-form-result.md
+git commit -m "spike: resolve vosk grammar form for miscue detection"
 ```
 
 ---
@@ -1517,6 +1630,13 @@ browser wiring around it needs eyes:
       "not enough storage" reason, which is distinct from "not supported".
 
 ## Outstanding — requires the user
+
+**Task 6b (grammar form) is a blocking gate and needs a human reading aloud.** It cannot be
+completed by code inspection — it requires speaking four variants of a line into a
+microphone, twice, and comparing transcripts. Trial B (a deliberately skipped word) is
+decisive: if the recognizer reports the word anyway under both grammar forms, omission
+detection is not achievable as designed and the approach needs revisiting before any app
+integration is built on it.
 
 **The confidence threshold (`MIN_CONFIDENCE` in `miscue.js`) is untuned.** Tuning needs recordings of a real child reading: 8–10 lines with deliberate errors (a skipped word, a substituted word, a self-correction) plus several clean reads. Tune so clean reads never flag; accept missing some real errors. Do not raise it above the point where a clean read is ever marked wrong.
 

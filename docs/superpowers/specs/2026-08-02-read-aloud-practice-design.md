@@ -66,6 +66,14 @@ Chosen over the two obvious alternatives for specific reasons:
 Vosk is chosen for one capability: **grammar-constrained recognition**. The decoder is
 restricted to the words of the current line plus an `[unk]` token. This yields two things:
 
+> **Open question — grammar form is UNRESOLVED and gated.** Inspecting the WASM shows Vosk
+> does not treat the grammar array as fixed phrase alternatives: it **estimates an n-gram
+> language model** from those strings (`Estimating language model with ngram-order=`,
+> `discount=`, and an assertion that `ngram_order >= 2`). Both candidate forms are therefore
+> legal but give different word-order priors, and the better one for *miscue detection* is
+> not the better one for dictation. See "Grammar form" below and plan Task 6b, which blocks
+> app integration until this is settled with real audio.
+
 1. **Accuracy improves sharply**, because the search space collapses from ~200k words to
    ~15. The recognizer no longer guesses *what* was said, only *which of these known
    words, in what order*. This substantially blunts the children's-voice problem.
@@ -75,6 +83,33 @@ restricted to the words of the current line plus an `[unk]` token. This yields t
 
 Omissions fall out of the same alignment pass: an expected word with no counterpart in the
 transcript.
+
+### Grammar form — the unresolved tradeoff
+
+Vosk's grammar input is a JSON array of strings used as **training data for a small n-gram
+LM**, not a set of phrases to match verbatim. Two forms are available for a line reading
+"The cat sat":
+
+| Form | LM effect | Consequence for miscue detection |
+|---|---|---|
+| `["the cat sat","[unk]"]` — one phrase, the documented style | Learns bigrams `the→cat→sat`. Strong prior toward canonical order. | Higher accuracy on a correct read, **but the decoder may hallucinate a skipped word because that path fits the LM** — hiding the omissions this feature exists to catch. |
+| `["the","cat","sat","[unk]"]` — one word per entry | Each entry is a one-word sentence, so no usable bigram context: a near-uniform word loop. | No order bias, so deviations surface honestly, **but weaker acoustic discrimination between similar words in the line** — pushing toward false positives, the most damaging direction. |
+
+Neither is obviously correct, and the tension is real: the form that recognizes best is the
+form most likely to paper over errors. Vosk's own documented examples use the first form,
+but they are dictation examples, not miscue-detection ones.
+
+**This is resolved empirically in plan Task 6b, which blocks app integration.** Whichever
+form wins, `grammarWords()` is unchanged — only the assembly in `listen.js` differs.
+
+Two related behaviours confirmed in the same inspection:
+
+- **Out-of-vocabulary words are dropped silently**, not rejected (`Ignoring word missing in
+  vocabulary: '%s'`). This independently validates the unscoreable-word design: such words
+  could never have reached the grammar anyway.
+- **`Runtime graphs are not supported by this model`** is the error if the model lacks the
+  dynamic graph. Our model ships `HCLr.fst` + `Gr.fst`, so this should never appear — if it
+  does, the wrong model was packaged.
 
 ### Spike results (2026-08-02) — verified, design confirmed
 
