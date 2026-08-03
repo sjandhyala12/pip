@@ -1013,24 +1013,47 @@ form" section.
 - Consumes: `listenForLine` from Task 6.
 - Produces: a decided `GRAMMAR_FORM` constant in `listen.js`, plus a written result doc.
 
-- [ ] **Step 1: Make the form switchable**
+- [ ] **Step 1a: Add the switch at MODULE scope**
 
-In `listen.js`, replace the grammar line in `makeRecognizer` with:
+In `listen.js`, at **module top level** — outside every function, next to the other
+module-level constants near the top of the file. `export` is only legal at module scope, so
+this must not go inside `makeRecognizer`:
 
 ```js
-// Which grammar form to feed Vosk. Vosk estimates an n-gram LM from these
-// strings, so the form changes the word-order prior — see Task 6b.
+/* Which grammar form to feed Vosk. Vosk estimates an n-gram LM from these
+ * strings, so the form changes the word-order prior — and therefore whether
+ * omissions are detectable at all. Decided by Task 6b. */
 export const GRAMMAR_FORM = 'words';   // 'words' | 'phrase'
 
 function buildGrammar(words) {
-  const uniq = [...new Set(words)];
   return GRAMMAR_FORM === 'phrase'
-    ? JSON.stringify([words.join(' '), '[unk]'])   // one phrase: strong order prior
-    : JSON.stringify([...uniq, '[unk]']);          // word loop: no order prior
+    ? JSON.stringify([words.join(' '), '[unk]'])          // one phrase: strong order prior
+    : JSON.stringify([...new Set(words), '[unk]']);       // word loop: no order prior
 }
 ```
 
-and use `buildGrammar(words)` where the grammar string was built inline.
+- [ ] **Step 1b: Call it from inside `makeRecognizer`**
+
+Replace only this line **inside** `makeRecognizer` (the four-line `PROVISIONAL` comment
+above it goes too):
+
+```js
+  const grammar = JSON.stringify([...new Set(words), '[unk]']);
+```
+
+with:
+
+```js
+  const grammar = buildGrammar(words);
+```
+
+`makeRecognizer` is otherwise unchanged.
+
+- [ ] **Step 1c: Verify the module still parses**
+
+Run: `node --input-type=module -e "import('./listen.js').then(m => console.log(m.GRAMMAR_FORM))"`
+Expected: prints `words`. A `SyntaxError` about `export` means the Step 1a block landed
+inside a function instead of at module scope.
 
 - [ ] **Step 2: Build a throwaway harness page**
 
@@ -1143,7 +1166,7 @@ practice: state.practice, practiceStuck: state.practiceStuck, practiceWords: sta
 
 - [ ] **Step 3: Update reset**
 
-`reset()` clears progress but deliberately leaves `readAloud` alone. Practice words are progress; the two practice settings are parent settings. Replace the body of `reset()`:
+`reset()` clears progress but deliberately leaves `readAloud` alone. Practice words are progress; the two practice settings are parent settings. Replace the **entire `reset()` function** (the block below includes its signature and closing brace, so do not nest it inside the existing one):
 
 ```js
 function reset() {
@@ -1234,9 +1257,18 @@ In the `switch` in the click listener, beside `toggleReadAloud`:
 
 - [ ] **Step 4: Probe the cache state once at startup**
 
-At the bottom of `app.js`, replace the final `render();` with:
+`app.js` currently ends with exactly these three lines:
 
 ```js
+/* ---------- start ---------- */
+loadProgress();
+render();
+```
+
+Replace those three lines with:
+
+```js
+/* ---------- start ---------- */
 loadProgress();
 render();
 // modelCacheState() is async (IndexedDB probe + storage.estimate), so cacheState
@@ -1249,7 +1281,8 @@ if (listenSupported) {
 }
 ```
 
-(Remove the now-duplicated `loadProgress(); render();` above it.)
+`loadProgress()` and `render()` must each still be called exactly once — verify by grepping:
+`grep -c '^loadProgress();' app.js` should print `1`.
 
 - [ ] **Step 5: Manual verification**
 
@@ -1297,14 +1330,19 @@ and immediately after it:
 
 - [ ] **Step 2: Render the practice screen**
 
-Add `viewPractice()` before `viewRead`, and branch at the top of `viewRead`:
+Two separate edits.
+
+**Edit 1** — insert this single guard as the first statement inside the existing `viewRead()`,
+immediately after its `function viewRead() {` line. Do not otherwise touch `viewRead`; its
+existing body stays exactly as it is:
 
 ```js
-function viewRead() {
   if (state.practice && listenSupported && state.lines.length) return viewPractice();
-  /* ...existing body unchanged... */
-}
+```
 
+**Edit 2** — add this complete new function immediately *before* `function viewRead()`:
+
+```js
 function viewPractice() {
   const c = cat();
   const p = passage();
