@@ -708,6 +708,7 @@ git commit -m "feat: add miscue alignment and classification"
 - Consumes: nothing.
 - Produces:
   - `export const listenSupported: boolean`
+  - `export function quotaVerdict(estimate: object|null): 'persistent'|'insufficient'` — pure, testable
   - `export async function modelCacheState(): Promise<'persistent'|'ephemeral'|'insufficient'>`
 
 - [ ] **Step 1: Vendor the library**
@@ -779,32 +780,83 @@ export async function modelCacheState() {
   });
   if (!canWrite) return 'ephemeral';
 
-  // Unknown quota must NOT be treated as insufficient. estimate() can be absent,
-  // throw, or return partial data; reporting 'insufficient' then would disable the
-  // feature on a perfectly capable device with a misleading reason. Proceed
-  // optimistically instead and let a real download failure surface via listenState.
+  let est = null;
   if (navigator.storage && navigator.storage.estimate) {
-    try {
-      const est = await navigator.storage.estimate();
-      const known = typeof est.quota === 'number' && typeof est.usage === 'number';
-      if (known && est.quota - est.usage < MODEL_BYTES_NEEDED) return 'insufficient';
-    } catch (e) { /* advisory only — fall through to 'persistent' */ }
+    try { est = await navigator.storage.estimate(); } catch (e) { est = null; }
   }
-  return 'persistent';
+  return quotaVerdict(est);
+}
+
+/* Pure quota decision, split out so it can be unit-tested.
+ *
+ * Unknown quota must NOT be treated as insufficient. estimate() can be absent,
+ * throw, or return partial data with quota/usage undefined. Reporting
+ * 'insufficient' in those cases would disable the feature on a perfectly capable
+ * device and tell the parent they are out of storage. Proceed optimistically; a
+ * genuine shortage then surfaces as a download failure, which is recoverable via
+ * the existing listenState error path. Failing open is the correct direction here.
+ */
+export function quotaVerdict(estimate) {
+  if (!estimate) return 'persistent';
+  const { quota, usage } = estimate;
+  if (typeof quota !== 'number' || typeof usage !== 'number') return 'persistent';
+  return quota - usage < MODEL_BYTES_NEEDED ? 'insufficient' : 'persistent';
 }
 
 export { MODEL_URL, MODEL_BYTES_NEEDED };
 ```
 
-- [ ] **Step 3: Verify it parses and exports correctly**
+- [ ] **Step 3: Write tests for the quota decision**
 
-Run: `node --input-type=module -e "import('./listen.js').then(m => console.log(Object.keys(m)))"`
-Expected: prints the exported names without throwing. `listenSupported` will be `false` under Node (no `window`) — that is correct.
+This logic already regressed once: `{ quota = 0, usage = 0 }` destructuring defaults fire on
+`undefined`, so partial data computed `0 - 0 < 75MB` and wrongly reported `insufficient`,
+disabling the feature on capable devices. These tests lock the failure direction.
 
-- [ ] **Step 4: Commit**
+Create `tests/quota.test.js`:
+
+```js
+import { test } from 'node:test';
+import assert from 'node:assert';
+import { quotaVerdict } from '../listen.js';
+
+test('ample free space is persistent', () => {
+  assert.equal(quotaVerdict({ quota: 500e6, usage: 10e6 }), 'persistent');
+});
+
+test('genuinely too little space is insufficient', () => {
+  assert.equal(quotaVerdict({ quota: 80e6, usage: 60e6 }), 'insufficient');
+});
+
+// The regression guards: unknown must never read as insufficient.
+test('a missing estimate is persistent, not insufficient', () => {
+  assert.equal(quotaVerdict(null), 'persistent');
+});
+
+test('an empty estimate object is persistent, not insufficient', () => {
+  assert.equal(quotaVerdict({}), 'persistent');
+});
+
+test('partial estimate data is persistent, not insufficient', () => {
+  assert.equal(quotaVerdict({ quota: 500e6 }), 'persistent');
+  assert.equal(quotaVerdict({ usage: 10e6 }), 'persistent');
+});
+```
+
+- [ ] **Step 4: Run tests to verify they pass**
+
+Run: `node --test`
+Expected: PASS. `listen.js` imports cleanly under Node because every browser API is reached
+only behind a `typeof window !== 'undefined'` guard or inside a function body.
+
+- [ ] **Step 5: Verify the module exports correctly**
+
+Run: `node --input-type=module -e "import('./listen.js').then(m => console.log(Object.keys(m).sort().join(',')))"`
+Expected: includes `listenSupported,modelCacheState,quotaVerdict`. `listenSupported` is `false` under Node (no `window`) — that is correct.
+
+- [ ] **Step 6: Commit**
 
 ```bash
-git add vendor/ listen.js
+git add vendor/ listen.js tests/quota.test.js
 git commit -m "feat: vendor vosk-browser and add listen capability detection"
 ```
 
@@ -909,7 +961,7 @@ export function stopListening() {
 - [ ] **Step 2: Verify the module still parses**
 
 Run: `node --input-type=module -e "import('./listen.js').then(m => console.log(Object.keys(m).sort().join(',')))"`
-Expected: includes `listenForLine,listenSupported,loadModel,modelCacheState,stopListening`
+Expected: includes `listenForLine,listenSupported,loadModel,modelCacheState,quotaVerdict,stopListening`
 
 - [ ] **Step 3: Manual browser check**
 
@@ -1442,6 +1494,22 @@ git commit -m "docs: document reading practice and correct story counts"
 - [ ] Finishing the last line goes to the quiz, which scores normally.
 - [ ] Reset clears practice words but preserves both practice settings.
 - [ ] An unsupported browser disables the toggle with a reason.
+
+Storage capability states — the `quotaVerdict` unit tests cover the decision, but the
+browser wiring around it needs eyes:
+
+- [ ] **Normal browser** → `modelCacheState()` returns `persistent`; no warning shown.
+- [ ] **Safari private browsing** → returns `ephemeral`; toggle still enabled and the
+      dashboard shows the "re-downloads about 39 MB each session" warning.
+- [ ] **Unknown quota** → returns `persistent`, NOT `insufficient`. Simulate in the console
+      before loading the dashboard:
+      ```js
+      navigator.storage.estimate = async () => ({});
+      ```
+      The feature must stay available. If it disables itself with "not enough storage",
+      the fail-closed bug has returned.
+- [ ] **Genuinely full device** → returns `insufficient`; toggle disabled with the
+      "not enough storage" reason, which is distinct from "not supported".
 
 ## Outstanding — requires the user
 
