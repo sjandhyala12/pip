@@ -22,8 +22,21 @@ struggling readers this feature is meant to help. A system that tells a struggli
 
 ## Technology choice
 
-**`vosk-browser`** (Kaldi compiled to WASM, `vosk-model-small-en-us` ~40MB), running fully
+**`vosk-browser`** (Kaldi compiled to WASM, `vosk-model-small-en-us-0.15`), running fully
 on-device.
+
+Measured cost of the feature, first run:
+
+| | |
+|---|---|
+| Model download (zipped) | 39.2 MiB |
+| Model unpacked on disk | 68 MB |
+| Vendored `vosk.js` | 5.8 MB |
+| **Total** | **~45 MB download, ~74 MB stored** |
+
+The 68 MB unpacked figure is what matters for Cache Storage quota. Safari's eviction of
+script-writable storage after extended non-use would force a 39 MB re-download, so the UI
+needs a "downloading again" state rather than assuming the model is present once fetched.
 
 Chosen over the two obvious alternatives for specific reasons:
 
@@ -50,15 +63,32 @@ restricted to the words of the current line plus an `[unk]` token. This yields t
 Omissions fall out of the same alignment pass: an expected word with no counterpart in the
 transcript.
 
-### Required spike before implementation
+### Spike results (2026-08-02) — verified, design confirmed
 
-1. Confirm the `vosk-browser` WASM build exposes grammar construction (the Python and C
-   APIs do; the browser wrapper must be verified).
-2. Measure model download and cold-start time on a mid-range device.
-3. Tune the confidence threshold against real recordings of a child reading.
+Full detail in `2026-08-02-vosk-spike-findings.md`. Verified by direct inspection of
+`vosk-browser@0.0.8` and `vosk-model-small-en-us-0.15`:
 
-**If grammar support is absent, invented-word detection weakens substantially and this
-design must be revisited before building.**
+- **Grammar-constrained recognition: confirmed.** `makeRecognizerWithGrammar` is compiled
+  into the WASM, Kaldi's `GrammarFst` machinery is present, and the model ships the
+  dynamic graph it requires (`HCLr.fst` + `Gr.fst`, no `HCLG.fst`).
+- **`[unk]` token: confirmed**, at symbol-table index 39 beside `<eps>` and `!SIL`.
+- **Per-word confidence and timings: confirmed** — `{ conf, start, end, word }` via
+  `setWords(true)`, plus partial results for live highlighting.
+
+Three implementation constraints the spike surfaced:
+
+- **Grammar is constructor-only.** No `setGrammar` exists, so each line requires a fresh
+  `KaldiRecognizer` and a `remove()` of the previous one.
+- **The library is UMD, not ESM**, despite its `"module"` field. `listen.js` must load it
+  via an injected script tag and read the global, not a bare `import`.
+- **Vendor `dist/vosk.js` into the repo.** It is one self-contained 5.8 MB file with the
+  WASM base64-embedded (no separate `.wasm` fetch), Apache-2.0. The package is pre-1.0 with
+  a single maintainer and no release in over a year; vendoring removes both the third-party
+  runtime request and the dependency risk, and suits a project with no package manager.
+
+Still outstanding, and **requires the user**: confidence-threshold tuning needs recordings
+of a real child reading. Implementation starts with a conservative value as a single named
+constant and tunes once a prototype exists. On-device performance is likewise unmeasured.
 
 ## Architecture
 
@@ -147,6 +177,35 @@ Segmentation runs once at import, the same way passage levels are stamped in
 
 Before comparison: lowercase; strip punctuation but keep internal apostrophes (`I'm`,
 `don't`); em-dash becomes a word boundary; digits spelled out.
+
+**Possessives split for grammar construction:** `X's` → `X` + `'s`. The spike found 14
+possessives (`mateo's`, `beaver's`, `okafor's`, …) absent from the model vocabulary while
+every base form and a standalone `'s` are present, so splitting resolves all of them.
+
+### Unscoreable words
+
+A word absent from the model's vocabulary **cannot be placed in a grammar**, so the child
+can never be scored correct on it — which under "must read correctly to advance" means
+permanently stuck. The spike found 6 such words after possessive splitting:
+
+| Word | Story | Why |
+|---|---|---|
+| `abuela`, `despacio` | `tamales` | Spanish; English acoustic model |
+| `churro` | `my-mailbox` | Spanish; a puppy's name |
+| `plip` | `fb-crow` | Onomatopoeia |
+| `ytrap`, `azzip` | `my-backwards` | "PARTY PIZZA" reversed — the story's premise |
+
+`my-backwards` is the decisive case: its whole point is text that reads backwards, so no
+recognizer can ever match it and no adult could unlock it either.
+
+**Rule:** words in this set are marked *unscoreable* at segmentation time. They auto-pass —
+never flagged as an omission or invention, never spoken as a correction, never counted
+toward the words-to-practice list. Because the corpus is fixed, the set is a precomputed
+constant in `miscue.js`, not a runtime vocabulary lookup.
+
+**Adding new content:** any story added later must be re-checked against the model
+vocabulary, or a child could hit the same trap. A test asserts the unscoreable set covers
+every OOV word in the corpus (see Testing).
 
 ### Alignment
 
@@ -284,6 +343,10 @@ Run over all 1,075 sentences in `passages/*.js`:
 - No line exceeds the 15-word cap.
 - None of the 9 abbreviation cases splits mid-abbreviation.
 - Quoted sentences retain their closing quote.
+- **Every out-of-vocabulary word in the corpus is in the unscoreable set.** This is the
+  regression guard against a future story reintroducing the `my-backwards` trap. The check
+  needs a checked-in vocabulary list extracted from the model, since the model itself is
+  too large to commit.
 
 High value for low effort, since it exercises real content rather than toy strings.
 
