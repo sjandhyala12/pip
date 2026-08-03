@@ -405,25 +405,19 @@ privacy story. Add to the Privacy panel:
 > The listening happens entirely on this device — the recording is never uploaded, stored,
 > or sent anywhere, and it is discarded as soon as the line is checked.
 
-### 2. Resolve the Google Fonts contradiction
+### 2. Google Fonts contradiction — DONE (commit `e987d02`)
 
-`index.html:7-9` loads Baloo 2 and Nunito from `fonts.googleapis.com` and
-`fonts.gstatic.com`, sending the child's IP and user-agent to Google on every page load.
-The existing "Nothing is sent to a server" claim is therefore already inaccurate, before
-this feature adds anything.
+`index.html` loaded Baloo 2 and Nunito from `fonts.googleapis.com` and `fonts.gstatic.com`,
+sending the child's IP and user-agent to Google on every page load, which made the existing
+"Nothing is sent to a server" claim inaccurate before this feature added anything.
 
-**Recommended: self-host the fonts.** Measured cost is **315 KB across 9 woff2 files** —
-negligible beside the 39 MB model, requires no build step, removes the only third-party
-request in the app, and makes the app fully offline-capable, which pairs naturally with an
-offline speech model. The privacy claim then becomes literally true rather than
-approximately true.
+Resolved by self-hosting: variable woff2 files in `fonts/`, `latin` subset only, **72 KB
+total**. (The earlier 315 KB estimate counted every subset; only `latin` is needed — it
+covers every non-ASCII character in the app's content and UI.) The app now makes no
+third-party requests and works fully offline, which suits an on-device speech model.
 
-**Alternative: soften the claim** to name the font CDN as the one exception. Cheaper, but
-leaves a real third-party request in a children's app whose selling point is that there
-isn't one.
-
-This is a decision for the user, not an implementation detail. Default is self-hosting
-unless they say otherwise.
+No further work here. The existing privacy copy is now accurate as written; only the
+microphone disclosure above still needs adding.
 
 ## Testing
 
