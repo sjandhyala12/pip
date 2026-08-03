@@ -547,6 +547,33 @@ test('punctuation-only tokens hold their position and never block', () => {
   assert.deepEqual(kinds(r), []);
   assert.ok(r.matched.includes(3), 'index 3 (sat) must still be index 3');
 });
+
+/* ---- possessives ----
+ * grammarWords() splits "Mateo's" into two grammar tokens, so Vosk returns two
+ * heard words against one on-screen word. Without folding, a PERFECT read is
+ * marked wrong — the single most damaging failure this design can produce, and
+ * it would hit 14 words across the corpus.
+ */
+test("a correctly read possessive is not a miscue", () => {
+  const r = classify(["Mateo's", 'dog', 'ran'], heard('mateo', "'s", 'dog', 'ran'));
+  assert.deepEqual(kinds(r), []);
+  assert.deepEqual(r.matched, [0, 1, 2], 'indices must stay aligned to screen tokens');
+});
+
+test('a possessive returned already joined is also fine', () => {
+  const r = classify(["Mateo's", 'dog'], heard("mateo's", 'dog'));
+  assert.deepEqual(kinds(r), []);
+});
+
+test('a genuinely misread possessive is still caught', () => {
+  const r = classify(["Mateo's", 'dog'], heard('carlos', "'s", 'dog'));
+  assert.deepEqual(kinds(r), ["substitution:mateo's"]);
+});
+
+test('folding does not swallow a following real word', () => {
+  const r = classify(["Mateo's", 'dog', 'ran'], heard('mateo', "'s", 'cat', 'ran'));
+  assert.deepEqual(kinds(r), ['substitution:dog']);
+});
 ```
 
 - [ ] **Step 2: Run to verify they fail**
@@ -563,6 +590,31 @@ Append to `miscue.js`:
 
 const FILLERS = new Set(['um', 'uh', 'er', 'hmm']);
 const UNK = '[unk]';
+
+/* Fold a standalone possessive back onto the previous word.
+ *
+ * grammarWords() splits "Mateo's" into ['mateo', "'s"] because that is how the
+ * model's vocabulary represents it, so Vosk returns two tokens. The expected
+ * side is screen tokens — one per word the child sees — so without this fold a
+ * PERFECT read of "Mateo's dog ran" aligns 3 expected against 4 heard and marks
+ * "Mateo's" a substitution. There are 14 possessives in the corpus.
+ *
+ * normalize("'s") is "s" (the leading apostrophe is stripped), so folding on the
+ * normalized value catches both spellings.
+ */
+function foldPossessives(tokens) {
+  const out = [];
+  for (const t of tokens) {
+    if (t.word === 's' && out.length && out[out.length - 1].word !== UNK) {
+      const prev = out[out.length - 1];
+      prev.word += "'s";
+      prev.conf = Math.min(prev.conf, t.conf);   // least-confident part governs
+      continue;
+    }
+    out.push({ ...t });
+  }
+  return out;
+}
 
 /* Confidence below which a mismatch is never reported.
  * UNTUNED — deliberately conservative. Tuning requires recordings of a real
@@ -615,10 +667,13 @@ export function classify(expectedWords, heardWords) {
   // A line with nothing scoreable cannot be judged; it simply passes.
   if (scoreableIdx.length === 0) return { miscues: [], matched: expected.map((_, i) => i), silent: false };
 
-  const kept = heardWords.filter(h => !FILLERS.has(normalize(h.word)));
+  // Normalize first, then fold possessives, then drop fillers. Order matters:
+  // folding needs normalized tokens, and fillers must not break a fold pair.
+  const norm = heardWords.map(h => ({ word: h.word === UNK ? UNK : normalize(h.word), conf: h.conf }));
+  const kept = foldPossessives(norm).filter(h => !FILLERS.has(h.word) && h.word !== '');
   if (kept.length === 0) return { miscues: [], matched: [], silent: true };
 
-  const heard = kept.map(h => (h.word === UNK ? UNK : normalize(h.word)));
+  const heard = kept.map(h => h.word);
   const confOf = new Map(kept.map((h, i) => [i, h.conf]));
 
   const pairs = align(expected, heard);
@@ -845,8 +900,14 @@ test('partial estimate data is persistent, not insufficient', () => {
 - [ ] **Step 4: Run tests to verify they pass**
 
 Run: `node --test`
-Expected: PASS. `listen.js` imports cleanly under Node because every browser API is reached
-only behind a `typeof window !== 'undefined'` guard or inside a function body.
+Expected: PASS.
+
+`listen.js` can be *imported* under Node because the only module-level browser access is
+inside the `typeof window !== 'undefined'` guard on `listenSupported`. That is the limit of
+its Node safety: **`quotaVerdict` is the only export callable under Node.** `modelCacheState()`
+dereferences `window` and `indexedDB` in its body and will throw if called there, which is
+why the quota decision was split out as a pure function rather than tested through it. Do
+not add tests that call any other export.
 
 - [ ] **Step 5: Verify the module exports correctly**
 
@@ -1145,7 +1206,8 @@ In `app.js`, inside the `state` object after `readAloud: true`:
   // transient practice state
   lines: [], lineIndex: 0, lineAttempt: 0, lineWords: [],
   listenState: 'idle',        // idle|loading|ready|listening|error
-  modelPct: 0, cacheState: null
+  modelPct: 0, cacheState: null,
+  practiceGate: null          // grown-up unlock challenge; separate from `gate`/`gateOpen`
 ```
 
 - [ ] **Step 2: Persist and restore them**
@@ -1325,7 +1387,19 @@ In `openStory`, extend the `Object.assign` with:
 and immediately after it:
 
 ```js
-  if (state.practice && listenSupported) state.lines = segment(passage().paras);
+  if (practiceActive()) state.lines = segment(passage().paras);
+```
+
+Add this helper next to the other small helpers near the top of `app.js`. Every practice
+entry point must go through it — a saved `practice: true` on a device that later ran low on
+storage would otherwise enter practice mode and fail at model load, contrary to the spec's
+"practice unavailable" behavior:
+
+```js
+// Single gate for "should practice mode run right now?". cacheState is null until
+// the async probe resolves; null is treated as fine, matching the fail-open rule.
+const practiceActive = () =>
+  state.practice && listenSupported && state.cacheState !== 'insufficient';
 ```
 
 - [ ] **Step 2: Render the practice screen**
@@ -1337,7 +1411,7 @@ immediately after its `function viewRead() {` line. Do not otherwise touch `view
 existing body stays exactly as it is:
 
 ```js
-  if (state.practice && listenSupported && state.lines.length) return viewPractice();
+  if (practiceActive() && state.lines.length) return viewPractice();
 ```
 
 **Edit 2** — add this complete new function immediately *before* `function viewRead()`:
@@ -1367,11 +1441,25 @@ function viewPractice() {
     panel = `<div class="practice-note listening">● Listening… read the line out loud</div>`;
   }
 
-  const stuck = state.lineAttempt >= 3
-    ? (state.practiceStuck === 'grownup'
-        ? `<button class="next-btn" data-action="unlockLine">Need help? Ask a grown-up</button>`
-        : `<button class="next-btn" data-action="unlockLine">Let’s do this one together</button>`)
-    : '';
+  // The grown-up gate renders inline on the practice screen — never by navigating
+  // to the dashboard, which would lose the child's place in the passage.
+  let stuck = '';
+  if (state.practiceGate) {
+    stuck = `
+      <div class="gate-card">
+        <div class="panel-title">Grown-ups only</div>
+        <div class="panel-sub">Ask a grown-up to solve this to unlock the line.</div>
+        <div class="gate-prompt">${state.practiceGate.prompt} = ?</div>
+        <input id="practice-gate-input" class="gate-input" type="number" inputmode="numeric" autocomplete="off" aria-label="Answer">
+        <div class="gate-err">${esc(state.practiceGate.error || '')}</div>
+        <button class="btn-3d btn-primary" data-action="practiceGateSubmit">Unlock</button>
+        <button class="link" data-action="practiceGateCancel">Keep trying instead</button>
+      </div>`;
+  } else if (state.lineAttempt >= 3) {
+    stuck = state.practiceStuck === 'grownup'
+      ? `<button class="next-btn" data-action="unlockLine">Need help? Ask a grown-up</button>`
+      : `<button class="next-btn" data-action="unlockLine">Let’s do this one together</button>`;
+  }
 
   return `
     <div class="screen" style="${catVars(c)}--psize:${state.textSize}px;">
@@ -1470,6 +1558,25 @@ function handleHeard(heard) {
   speak(first.word, { onEnd: () => { if (state.lineAttempt < 3) listenLine(); } });
 }
 
+/* The stuck hatch: read the line to the child, then move on regardless.
+ * Reached directly under the 'help' setting, or after the grown-up gate. */
+function helpAndAdvance() {
+  stopListening();
+  state.practiceGate = null;
+  speak(state.lines[state.lineIndex], { onEnd: () => advanceLine() });
+}
+
+/* Practice-only grown-up gate. Deliberately separate from `state.gate` /
+ * `state.gateOpen`, which belong to the dashboard and persist for the session. */
+function handlePracticeGate() {
+  const el = document.getElementById('practice-gate-input');
+  const val = el ? parseInt(el.value, 10) : NaN;
+  if (val === state.practiceGate.answer) { helpAndAdvance(); return; }
+  state.practiceGate = makeGate();
+  state.practiceGate.error = 'Not quite — try again.';
+  render();
+}
+
 function advanceLine() {
   state.lineIndex++;
   state.lineAttempt = 0;
@@ -1493,10 +1600,25 @@ function advanceLine() {
     case 'startPractice': startPractice(); break;
     case 'skipPractice': state.lines = []; state.listenState = 'idle'; stopListening(); render(); break;
     case 'unlockLine':
-      if (state.practiceStuck === 'grownup' && !state.gateOpen) { state.gate = makeGate(); state.screen = 'dashboard'; render(); break; }
       stopListening();
-      speak(state.lines[state.lineIndex], { onEnd: () => advanceLine() });
+      // The grown-up gate is its own transient state, NOT the dashboard's `gateOpen`.
+      // Two reasons: navigating to the dashboard would abandon the child's place in
+      // the passage, and reusing `gateOpen` would let any child whose parent opened
+      // the dashboard earlier this session skip the check entirely.
+      if (state.practiceStuck === 'grownup') { state.practiceGate = makeGate(); render(); break; }
+      helpAndAdvance();
       break;
+    case 'practiceGateSubmit': handlePracticeGate(); break;
+    case 'practiceGateCancel': state.practiceGate = null; render(); break;
+```
+
+- [ ] **Step 4b: Let Enter submit the practice gate**
+
+`app.js` has a keydown listener (`app.js:815`) that submits the dashboard gate on Enter.
+Extend its body to handle the practice gate too:
+
+```js
+  if (e.target && e.target.id === 'practice-gate-input' && e.key === 'Enter') { e.preventDefault(); handlePracticeGate(); }
 ```
 
 - [ ] **Step 5: Stop listening on every screen change**
@@ -1644,7 +1766,18 @@ git commit -m "docs: document reading practice and correct story counts"
 - [ ] A self-correction is **not** flagged.
 - [ ] Silence does not burn an attempt.
 - [ ] Stuck setting `help`: after 3 tries the app reads the line and advances.
-- [ ] Stuck setting `grownup`: after 3 tries the multiplication gate appears.
+- [ ] Stuck setting `grownup`: after 3 tries the gate appears **inline on the reading
+      screen** — the child is never navigated to the dashboard and never loses their place.
+- [ ] Stuck setting `grownup`: solving the gate reads the line and advances that line only;
+      the next stuck line asks again.
+- [ ] Stuck setting `grownup`, **bypass check**: open the parent dashboard first (so the
+      dashboard gate is satisfied for the session), then return to a story and get stuck.
+      The grown-up gate must STILL appear. If it does not, practice is reusing `gateOpen`.
+- [ ] "Keep trying instead" dismisses the gate and returns to reading.
+- [ ] A line containing a possessive ("Mateo's", "the beaver's dam") read **correctly** is
+      accepted and never flagged.
+- [ ] Saved `practice: true` on a device with too little storage does NOT enter practice
+      mode — the story opens as a normal read screen.
 - [ ] Story `my-backwards` passes the `YTRAP AZZIP` line without blocking.
 - [ ] Story `tamales` passes `Abuela` and `Despacio` without blocking.
 - [ ] Finishing the last line goes to the quiz, which scores normally.
