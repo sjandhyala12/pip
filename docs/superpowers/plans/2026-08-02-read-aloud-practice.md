@@ -1339,7 +1339,12 @@ render();
 // the probe actually reports a problem. Do not "tidy" those into truthy checks:
 // that would disable the feature during the probe on every single load.
 if (listenSupported) {
-  modelCacheState().then(s => { state.cacheState = s; if (state.screen === 'dashboard') render(); });
+  // Re-render the dashboard (toggle/warning) and the read screen (which may need to
+  // fall back out of practice mode) once the probe resolves.
+  modelCacheState().then(s => {
+    state.cacheState = s;
+    if (state.screen === 'dashboard' || state.screen === 'read') render();
+  });
 }
 ```
 
@@ -1367,7 +1372,7 @@ git commit -m "feat: add reading practice controls to parent dashboard"
 
 **Interfaces:**
 - Consumes: everything from Tasks 2–8.
-- Produces: dispatcher actions `startPractice`, `retryLine`, `unlockLine`; `state.lines` populated on story open.
+- Produces: dispatcher actions `startPractice`, `skipPractice`, `unlockLine`, `practiceGateSubmit`, `practiceGateCancel`; the `practiceActive()` helper; `state.lines` populated on story open.
 
 - [ ] **Step 1: Segment on story open**
 
@@ -1507,6 +1512,11 @@ function creditWord(word) {
 }
 
 async function startPractice() {
+  // Re-check on click, not just at render. openStory() may have entered practice
+  // while cacheState was still null (the probe is async); if it has since resolved
+  // to 'insufficient', an already-painted "Start reading" button must not kick off
+  // a 39 MB download onto a device that cannot hold it.
+  if (!practiceActive()) { state.lines = []; state.listenState = 'idle'; render(); return; }
   state.listenState = 'loading'; render();
   try {
     await loadModel(pct => { state.modelPct = pct; render(); });
@@ -1609,7 +1619,14 @@ function advanceLine() {
       helpAndAdvance();
       break;
     case 'practiceGateSubmit': handlePracticeGate(); break;
-    case 'practiceGateCancel': state.practiceGate = null; render(); break;
+    // "Keep trying instead" must actually resume reading. Clearing the gate alone
+    // would leave lineAttempt at 3, so the stuck button reappears immediately and
+    // nothing is listening — the child would be stranded with no way forward.
+    case 'practiceGateCancel':
+      state.practiceGate = null;
+      state.lineAttempt = 0;      // grant a fresh set of tries
+      listenLine();
+      break;
 ```
 
 - [ ] **Step 4b: Let Enter submit the practice gate**
@@ -1773,7 +1790,11 @@ git commit -m "docs: document reading practice and correct story counts"
 - [ ] Stuck setting `grownup`, **bypass check**: open the parent dashboard first (so the
       dashboard gate is satisfied for the session), then return to a story and get stuck.
       The grown-up gate must STILL appear. If it does not, practice is reusing `gateOpen`.
-- [ ] "Keep trying instead" dismisses the gate and returns to reading.
+- [ ] "Keep trying instead" dismisses the gate **and resumes listening** — the stuck button
+      must not reappear immediately, and the child must be able to read straight away.
+- [ ] With practice saved on, turn the device low on storage (or stub
+      `navigator.storage.estimate` to report a full disk) and open a story: the "Start
+      reading" button must not begin a download once the probe resolves.
 - [ ] A line containing a possessive ("Mateo's", "the beaver's dam") read **correctly** is
       accepted and never flagged.
 - [ ] Saved `practice: true` on a device with too little storage does NOT enter practice
