@@ -115,8 +115,9 @@ per-line grammar-constrained recognition. No other file references Vosk.
 
 ```js
 export const listenSupported            // can we listen at all? (see capability tiers)
-export function modelCacheState()       // → 'persistent' | 'ephemeral' | 'insufficient'
-export function loadModel(onProgress)   // → Promise; vosk caches into IndexedDB itself
+export function quotaVerdict(estimate)  // pure, testable → 'persistent' | 'insufficient'
+export async function modelCacheState() // → Promise<'persistent'|'ephemeral'|'insufficient'>
+export async function loadModel(onProgress)   // vosk caches into IndexedDB itself
 export function listenForLine(words, { onPartial, onResult })
 export function stopListening()
 ```
@@ -372,7 +373,11 @@ Secure context (`window.isSecureContext` — `getUserMedia` requires it), `WebAs
 `navigator.mediaDevices.getUserMedia`, and Web Audio. All feature-detected, never
 user-agent sniffed. If false: practice unavailable, dashboard toggle disabled with a reason.
 
-**Tier 2 — can we keep the model?** (`modelCacheState()`)
+**Tier 2 — can we keep the model?** (`await modelCacheState()`)
+
+Necessarily asynchronous: both the IndexedDB open/write probe and
+`navigator.storage.estimate()` are async. Callers must await it, and the UI must tolerate
+`state.cacheState` being `null` on first render, before the probe resolves.
 
 | Result | Condition | Behavior |
 |---|---|---|
@@ -389,7 +394,7 @@ a failed download costs a retry, a false `insufficient` costs the whole feature 
 misleading explanation. A download that does fail surfaces through the existing
 `listenState: 'error'` path with its retry and "skip practice for this story" options.
 
-A capability test-write is required rather than a bare `'caches' in window` check: Safari
+A capability test-write is required rather than a bare `'indexedDB' in window` check: Safari
 exposes the API in private browsing and fails on write.
 
 ## Read screen states

@@ -1126,6 +1126,11 @@ At the bottom of `app.js`, replace the final `render();` with:
 ```js
 loadProgress();
 render();
+// modelCacheState() is async (IndexedDB probe + storage.estimate), so cacheState
+// stays null through the first render. The dashboard checks above are written to
+// treat null as "fine so far" — the toggle is enabled and no warning shows until
+// the probe actually reports a problem. Do not "tidy" those into truthy checks:
+// that would disable the feature during the probe on every single load.
 if (listenSupported) {
   modelCacheState().then(s => { state.cacheState = s; if (state.screen === 'dashboard') render(); });
 }
