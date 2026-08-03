@@ -2,6 +2,21 @@
 [build]
   publish = "."
 
+# practice-lab.html is a development harness (microphone trials + QA checklist),
+# not part of the app. Netlify has no per-file exclusion for a static publish
+# directory, so it is made unreachable instead: this rule serves the app for
+# that path, exactly as any other unknown URL behaves under the SPA rule below.
+#
+# `force = true` is required — without it a real file on disk wins over a
+# redirect rule and the lab would still be served.
+#
+# Order matters: specific rules must appear BEFORE the catch-all.
+[[redirects]]
+  from = "/practice-lab.html"
+  to = "/index.html"
+  status = 200
+  force = true
+
 # Single-page app: all navigation is client-side, so serve index.html for any path.
 [[redirects]]
   from = "/*"
